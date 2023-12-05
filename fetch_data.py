@@ -11,7 +11,7 @@ file_info = {
     'vaccine_types.xlsx': {
         'url': 'https://opendata.ecdc.europa.eu/covid19/vaccine_tracker/xlsx/data.xlsx',
         'sha1': '1051efcaabfe1ac83cd112b46ca7962c1985d489'},
-    'excess_death.xlxs.xlsx': {
+    'excess_death.xlsx': {
         'url': None,
         'sha1': '7e79a78219a98a7770d57ce15aef12c45cea29f5'}
 }
