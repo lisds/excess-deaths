@@ -14,4 +14,5 @@ justnumbs = justnumbs.apply(pd.to_numeric, errors='coerce')
 justnumbs['Mean 2023'] = justnumbs.iloc[:, -9:].mean(axis = 1)
 justnumbs.sort_values('Mean 2023')
 
+
 print(justnumbs)
