@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 
-excess_death = pd.read_excel('data/excess_death.xlsx')
+excess_death = pd.read_excel('data/excess_death.xlsx', sheet_name = 'Sheet 1', skiprows=7, skipfooter=6)
 
 # Remove columns labelling rates that are estimated or provisional data ** RETURN TO THIS
 justnumbs = excess_deaths.loc[:, ~excess_deaths.columns.str.startswith('Unnamed')][1:]
