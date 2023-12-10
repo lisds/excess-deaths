@@ -20,4 +20,4 @@ drop_dupes = vaccine_types.drop_duplicates(subset = ['YearWeekISO', 'ReportingCo
 
 
 
-#There are still some problems with the outputs for some countries
+#There are still some problems with the outputs for some countries I think
