@@ -48,7 +48,7 @@ country_code_dict = {
     'Norway': 'NO', 
     'Switzerland': 'CH', 
     }
-
+#Adding a new column called 'ReportingCountry' with associated country codes
 excess_deaths_values['ReportingCountry'] = excess_deaths_values.index.map(country_code_dict)
 
 print(excess_deaths_values)
