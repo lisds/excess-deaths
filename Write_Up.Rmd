@@ -22,14 +22,11 @@ jupyter:
 # Is there a link between certain Covid-19 vaccines and 2023 excess all-cause mortality?
 
  To remember:
-- CHANGE TO RMD 
-- Put all cleaning in here 
 - ONLY homemade functions in .py files
-- are we using excess death or excess mortality - keep constant throughout
- - make plot function
- - rename variables
- - comments on lines of code 
-
+- are we using excess death or excess mortality - clarify difference and keep constant throughout
+- make function to generalise vaccine type plots 
+- rename variables clearly
+- comments on lines of code 
 
 ### Introduction 
 
@@ -142,54 +139,66 @@ base_vaccine_data = base_vaccine_data.drop_duplicates(subset = ['YearWeekISO', '
 ```
 
 ### Analysis
+
 ##### Inital regression of mean excess mortality against vaccination percentage for EU countries
+
+```{python}
+import scipy.stats as sps
+
+#Working out the number of people in each country vaxed by the end of 2022, filtering so only data for 'ALL' target group is considered as age specific counts were unreliable, summing the first dose after grouping by target group and reporting country
+total_vaxed_up_to_23 = base_vaccine_data[base_vaccine_data['Year'] != '2023'][base_vaccine_data['TargetGroup'] == 'ALL'].groupby('ReportingCountry')['FirstDose'].sum()
+#taking the population for each country in as of the first week of 2023
+population_wk1_23 = base_vaccine_data[base_vaccine_data['YearWeekISO'] == '2023-W01'].groupby('ReportingCountry')['Population'].first()
+#Converting the number of people vaccinated into a proportion of the population
+percent_vaxed_wk1_23= total_vaxed_up_to_23/population_wk1_23
+percent_vaxed_wk1_23
+
+just_code_and_mean = excess_deaths_values[['ReportingCountry', 'Mean 2023']]
+
+#Merging the data frames on the ReportingCountry column, resulting in a data frame with ReportingCountry code, mean excess deaths in 2023 and 
+# % of population vaxed as of the end of 2022
+merged = pd.merge(just_code_and_mean, pd.DataFrame(percent_vaxed_wk1_23), on = 'ReportingCountry')
+
+#Regressing  the percent vaxed against the mean excess deaths
+regression = sps.linregress(merged[0], merged['Mean 2023'])
+```
 
 ```{python}
 import matplotlib.pyplot as plt
 
-import first_regression
-plt.scatter(first_regression.merged[0],first_regression.merged['Mean 2023'])
+plt.scatter(merged[0],merged['Mean 2023'])
 
-for i in range(len(first_regression.merged)):
-    plt.text(first_regression.merged[0][i] + 0.01, first_regression.merged['Mean 2023'][i], first_regression.merged['ReportingCountry'][i], fontsize=8)
+for i in range(len(merged)):
+    plt.text(merged[0][i] + 0.01, merged['Mean 2023'][i], merged['ReportingCountry'][i], fontsize=8)
  
 plt.xlabel('Percent Vaccinated as of 2023')
 plt.ylabel('Mean Excess Deaths 2023')
 plt.title('Vaccination uptake versus mean excess deaths')
-plt.plot(first_regression.percent_vaxed_wk1_23, first_regression.regression[1] + first_regression.regression[0]*first_regression.percent_vaxed_wk1_23, 'r', label='fitted line')
+plt.plot(percent_vaxed_wk1_23, regression[1] + regression[0]*percent_vaxed_wk1_23, 'r', label='fitted line')
 
 plt.show()
-
-
 ```
 
-Insert image here of graph maybe?
-Text here?
+```{python}
+regression.rvalue
+```
 
 
 ```{python}
-first_regression.regression.rvalue
-
-first_regression.regression.pvalue
-
+regression.pvalue
 ```
-
 
 This initial linear regression plot yeilded an correlation coefficient of 0.63, indicating a moderate postitive correlation between mean 2023 excess all-cause mortality and vaccination percentage. A positive correlation suggests that the higher a country's proportion of vaccinated individuals, the higher their levels of excess all-cause mortality (dk how best to say this).
 
 A very small p-value of 0.0003 enables us to have high confidence that the observed correlation did not arise from our null-model of no correlation, and therefore we have reason to prefer to the alternative hypothesis, that higher vaccination percentage is associated with higher excess mortlaity. In other words, the result is unlikley to have happened by chance when there is no correlation, and therefore we can be relatively confident in the (validity?) of our results.
 
 - Comment on any anomalies
-- Add a line of best fit
-- Plot the distrbution of the residual errors to investigate whether the relationship is best represented by a straight line.
+
+#### Residual error plot
 
 
 
-```{python}
-
-
-```
-
+- Kess' residual error plot to investigate whether the relationship is best represented by a straight line
 
 ##### Assumptions/limitations
 
@@ -198,6 +207,8 @@ A very small p-value of 0.0003 enables us to have high confidence that the obser
 - Just focusing on first doses
 - Not done by vaccination type....
 - We know it is correlated but the question is whether vaccination rate impacted excess death
+
+##### Regression of mean excess mortality against vaccination percentage for EU countries by vaccination 
 
 ```{python}
 by_type_and_country = base_vaccine_data[(base_vaccine_data['Year'] != '2023') & (base_vaccine_data['TargetGroup'] == 'ALL')].groupby(['ReportingCountry','Vaccine'])['FirstDose'].sum()
@@ -266,38 +277,14 @@ plt.title('JANNS')
 
 
 
-```{python}
 
-
-```
-
-
-Text here?
-
-
-```{python}
-
-
-```
-
-
-Text here?
-
-
-```{python}
-
-
-```
-
+- We know (THIS) about the correlation but the question is whether vaccination rate impacted excess death
 
 ### Conclusion
 
 - Areas for future research 
 
 
-```{python}
 
-
-```
 
 
