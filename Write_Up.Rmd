@@ -28,6 +28,18 @@ jupyter:
 - rename variables clearly
 - comments on lines of code 
 
+```{python}
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt 
+import scipy.stats as sps
+
+# Safe setting for Pandas.  Needs Pandas version >= 1.5.
+pd.set_option('mode.copy_on_write', True)
+
+#import fetchdata
+```
+
 ### Introduction 
 
 This project aims to investigate excess all cause mortality across EU countries post-covid-19 pandemic, and the role of Covid-19 vaccines as a potential cause. 
@@ -57,12 +69,17 @@ The EU scope of our project comes from a wealth of data making it possible to co
 - acknowledge the fact that we haven't been able to determine the variance of excess mortality prior to/during 2016-2019
 
 
-```{python}
-import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt 
-excess_deaths = pd.read_excel('data/excess_death.xlsx', sheet_name = 'Sheet 1', skiprows=7, skipfooter=6)
+#### Read in data
 
+```{python}
+excess_deaths = pd.read_excel('data/excess_death.xlsx', sheet_name = 'Sheet 1', skiprows=7, skipfooter=6)
+excess_deaths.head()
+```
+
+The data has downloaded in an awkward format. The country column is labelled as 'TIME'. Each month excess mortality data point also comes with an adjacent column labelling whether it is real data, provisional or estimated. Countries are also labelled with their full names.
+In order to work with the data...
+
+```{python}
 # Remove columns labelling rates that are estimated or provisional data ** RETURN TO THIS
 excess_deaths_values = excess_deaths.loc[:, ~excess_deaths.columns.str.startswith('Unnamed')][1:]
 
