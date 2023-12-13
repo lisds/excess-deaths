@@ -22,13 +22,14 @@ jupyter:
 # Is there a link between certain Covid-19 vaccines and 2023 excess all-cause mortality?
 
  To remember:
+- Need EU scope in the title?
 - ONLY homemade functions in .py files
-- are we using excess death or excess mortality - clarify difference and keep constant throughout
-- make function to generalise vaccine type plots 
+- check we are using excess death and excess mortality right throughout
 - rename variables clearly
-- comments on lines of code 
+- comments on lines of code
 
 ```{python}
+#Importing necessary libraries 
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt 
@@ -37,43 +38,48 @@ import scipy.stats as sps
 # Safe setting for Pandas.  Needs Pandas version >= 1.5.
 pd.set_option('mode.copy_on_write', True)
 
-#import fetchdata
+#Importing our fetch data file 
+import fetch_data
 ```
 
 ### Introduction 
 
-This project aims to investigate excess all cause mortality across EU countries post-covid-19 pandemic, and the role of Covid-19 vaccines as a potential cause. 
+This project aims to investigate excess all-cause mortality across EU countries post-covid-19 pandemic, and the role of Covid-19 vaccines as a potential cause. 
 
-The raw number of excess deaths gives us a sense of scale, but it is less comparable across countries due to large differences in population. To better enable comparisons across countries, we measure excess mortality as the percentage difference between the reported and projected number of deaths.
+The term excess death refers to the (absolute?) difference between the number of observed and expected deaths (CITE) in a given period. To better enable comparisons across countries with large diferrence in population, this project investigates excess *mortality*, which refers to the percentage difference between the observed and expected number of deaths.
 
-The concept of excess mortality refers to the difference between the number of observed and expected deaths (CITE). All-cause excess mortality therefore refers to the difference in the number of people who died from any cause in a given period, compared to the expected number of deaths from any cause in that given period.
+In particular, we will be looking at all-cause excess mortality,which refers to the percentage difference in the number of people who died from any cause in a given period, compared to the expected number of deaths from any cause in that given period.
 
-We will use multiple linear regression to investigate the relationship between (how many) EU country's vaccination and their excess death.
+We will employ multiple linear regression in order to investigate the relationship between Covid-19 vaccination and excess mortality across 31 countries (27 EU countries and 4 countries from the European Free Trade Association).
 
-The EU scope of our project comes from a wealth of data making it possible to compare vaccination types etc
-
+- Explain reasoning for EU scope - the wealth of data across countries makes it possible to compare vaccination types etc
 
 ### Literature review
 
-- mention UK parliment speech to introduce the focus on vaccination as a potential cause? a single thing which affected the whole population etc
-- evidence for withdrawal of mrna vaccines and therefore we will split by vaccine type
-- what has relevant existing literature done/found and what are the gaps - therefore what are we trying to find/do
+- UK parliment speech to introduce our focus on Covid-19 vaccines as a potential cause of excess death - MP mentioned that it was the single thing which affected the whole population etc
+- Trust the evidence critiqued UK report 'Trends in Excess Deaths and Covid-19 Vaccines' for referring to Covid-vaccine as singular despite varying types - we will therefore investigate each vaccine type
+- ^^^ Mayb also link to evidence for scepticism/withdrawal of certain vaccine types to emphasise the differences between vaccines
+- What else has relevant existing literature done/found and what are the gaps - therefore what are we trying to find/do
 
 
-### Excess death data 
+### Excess mortality data 
 
-- How do Eurostat define an excess death - what historical baseline is used 
-- Where does the data come from - how is it inputted
-- The excess mortality indicator takes the number of people who died from any cause in a given period and compares it with a historical baseline from previous years in a period that was not affected by the COVID-19 pandemic. In this case, the baseline consists of the average number of deaths that occurred each month during the period 2016-2019.
-- mention limitations of this measure & 2016-2019 baseline
-- acknowledge the fact that we haven't been able to determine the variance of excess mortality prior to/during 2016-2019
+Eurostat's excess mortliaty indicator is part of European Statistical Recovery Dashboard and takes the number of people who died from any cause in a given period and compares it with a historical baseline from previous years. In the case of our data, this baseline consists of the average number of deaths that occurred each month during the period 2016-2019.
 
+Therefore, when referring to excess mortality throughout this project, we will be referring to the percentage difference in additional deaths from any cause when compared with the average monthly deaths in 2016-2019. The higher the value, the higher the number of additional deaths, with negative numbers showing fewer deaths compared to the basline period.
 
-#### Read in data
+The excess mortality indicator is based on a data collection in which National Statistical Institutes from the European Union (EU) and the European Free Trade Association (EFTA) have transmitted weekly deaths data to Eurostat on a voluntary basis since April 2020. This weekly deaths dataset is then used to compute the monthly excess mortality indicator by mapping the deaths of each week to a full month. 
+
+The data covered in this analysis include all deaths that have occurred since January 2020 and up until ....
+
+-  mention possible limitations of this measure & of the 2016-2019 baseline 
+-  acknowledge the fact that we haven't been able to determine the variance of excess mortality prior to/during 2016-2019
+
+#### Cleaning excess mortality data
 
 ```{python}
+#Reading in initial excess mortality data
 excess_deaths = pd.read_excel('data/excess_death.xlsx', sheet_name = 'Sheet 1', skiprows=7, skipfooter=6)
-excess_deaths.head()
 ```
 
 The data has downloaded in an awkward format. The country column is labelled as 'TIME'. Each month excess mortality data point also comes with an adjacent column labelling whether it is real data, provisional or estimated. Countries are also labelled with their full names.
@@ -129,15 +135,32 @@ country_code_dict = {
 excess_deaths_values['ReportingCountry'] = excess_deaths_values.index.map(country_code_dict)
 ```
 
-### Vaccine data
-
-blah blah blah?
+### COVID-19 Vaccination data
 
 
+Write this up:
+
+The downloadable data file contains information on COVID-19 vaccination in the EU/EEA.
+
+The data are presented in the Vaccine Tracker and collected through The European Surveillance System (TESSy). EU/EEA Member States are requested to report basic indicators (number of vaccine doses distributed by manufacturers, number of first, second, additional and unspecified doses administered) and data by target groups at national level every four weeks.
+
+The data presented in the Vaccine Tracker are submitted by European Union/European Economic
+Area (EU/EEA) countries to ECDC through The European Surveillance System (TESSy) once every
+four weeks on Tuesdays. EU/EEA countries report aggregated data on the number of vaccine
+doses distributed by manufacturers to the country, the number of first, second, additional and
+unspecified doses administered to adults (18+), adolescent and children (<18) overall, by age
+groups and in specific target groups, such as healthcare workers (HCWs) and in residents in longterm care facilities (LTCFs). Doses are also reported by vaccine product.
+The downloadable data files contain the data on the COVID-19 vaccine rollout mentioned above and
+each row contains the corresponding data for a certain week and country. 
+
+#### Cleaning vaccination data
 
 ```{python}
+#Reading in initial vaccination data
 base_vaccine_data = pd.read_excel('data/vaccine_types.xlsx')
+```
 
+```{python}
 #Drop unwanted columns - only focussing on first dose - binary vaccinated or not
 base_vaccine_data = base_vaccine_data.drop(['Denominator', 'NumberDosesReceived', 'NumberDosesExported', 'FirstDoseRefused', 'SecondDose', 'DoseAdditional1', 'DoseAdditional2', 'DoseAdditional3', 'DoseAdditional4', 'DoseAdditional5', 'UnknownDose'], axis = 1)
 
@@ -149,10 +172,10 @@ base_vaccine_data = base_vaccine_data[base_vaccine_data['ReportingCountry'] == b
 
 #Drop duplicate rows
 base_vaccine_data = base_vaccine_data.drop_duplicates(subset = ['YearWeekISO', 'ReportingCountry', 'FirstDose'])
+```
 
+```{python}
 
-
-#There are still some problems with the outputs for some countries I think
 ```
 
 ### Analysis
@@ -160,12 +183,12 @@ base_vaccine_data = base_vaccine_data.drop_duplicates(subset = ['YearWeekISO', '
 ##### Inital regression of mean excess mortality against vaccination percentage for EU countries
 
 ```{python}
-import scipy.stats as sps
-
 #Working out the number of people in each country vaxed by the end of 2022, filtering so only data for 'ALL' target group is considered as age specific counts were unreliable, summing the first dose after grouping by target group and reporting country
 total_vaxed_up_to_23 = base_vaccine_data[base_vaccine_data['Year'] != '2023'][base_vaccine_data['TargetGroup'] == 'ALL'].groupby('ReportingCountry')['FirstDose'].sum()
+
 #taking the population for each country in as of the first week of 2023
 population_wk1_23 = base_vaccine_data[base_vaccine_data['YearWeekISO'] == '2023-W01'].groupby('ReportingCountry')['Population'].first()
+
 #Converting the number of people vaccinated into a proportion of the population
 percent_vaxed_wk1_23= total_vaxed_up_to_23/population_wk1_23
 percent_vaxed_wk1_23
@@ -211,11 +234,48 @@ A very small p-value of 0.0003 enables us to have high confidence that the obser
 
 - Comment on any anomalies
 
-#### Residual error plot
+##### Residual error plot
 
 
 
-- Kess' residual error plot to investigate whether the relationship is best represented by a straight line
+In order to check whether the relationship between a country's percentage of vaccinated individals and its excess mortality is best represented by a straight line, we then decided to plot the distribution of the residual errors from the above linear regression.
+
+
+First we decided to create a plot demonstrating the residual errors for each data point.
+
+```{python}
+#A plot to demonstrate the acutal values, predicted values and residual error
+def plot_with_errors(x_values, y_values, c, s):
+    
+    predicted = c + s * x_values
+    
+    errors = y_values - predicted
+    
+    plt.plot(x_values, y_values, 'o', color='blue')
+    plt.plot(x_values, predicted, 'o', color='red')
+    
+    for i in np.arange(len(x_values)):
+        x = x_values[i]
+        y_0 = predicted[i]
+        y_1 = y_values[i]
+        plt.plot([x, x], [y_0, y_1], ':', color='black', linewidth=1)
+    return np.sqrt(np.mean(errors ** 2))
+```
+
+```{python}
+plot_with_errors(merged[0], merged['Mean 2023'], regression.intercept, regression.slope)
+plt.xlabel('Percent Vaccinated as of 2023')
+plt.ylabel('Mean Excess Deaths 2023')
+```
+
+And then plotted the distribution of the residual errors.
+
+```{python}
+#Plotting a histogram of the residual errors
+plt.hist(spi['SPI'] - predicted);
+```
+
+- Describe whether there appears to be a pattern in the way the residuals behave from left to right of the residual plot above.
 
 ##### Assumptions/limitations
 
@@ -226,6 +286,9 @@ A very small p-value of 0.0003 enables us to have high confidence that the obser
 - We know it is correlated but the question is whether vaccination rate impacted excess death
 
 ##### Regression of mean excess mortality against vaccination percentage for EU countries by vaccination 
+
+
+- Import py file with Daniel's function to generalise vaccine type plots 
 
 ```{python}
 by_type_and_country = base_vaccine_data[(base_vaccine_data['Year'] != '2023') & (base_vaccine_data['TargetGroup'] == 'ALL')].groupby(['ReportingCountry','Vaccine'])['FirstDose'].sum()
