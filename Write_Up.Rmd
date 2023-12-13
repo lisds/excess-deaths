@@ -27,6 +27,7 @@ jupyter:
 - check we are using excess death and excess mortality right throughout
 - rename variables clearly
 - comments on lines of code
+- ARE DATASETS looking at the same list of countries?? - Excess mortality EU + EFTA countries vs Vaccine Type EU +EEA countries -> comment on this Switzerland is in EFTA but not EEA or EU
 
 ```{python}
 #Importing necessary libraries 
@@ -175,7 +176,7 @@ base_vaccine_data = pd.read_excel('data/vaccine_types.xlsx')
 base_vaccine_data.head()
 ```
 
-We decided to initally only focus on first doses of Covid-19 vaccinations so removed the other columns for now. 
+We decided to initally only focus on first doses of Covid-19 vaccinations so removed the other columns for now. This provides us with a simple binary measure of vaccinated or not to later calculate our population vaccination rates. 
 
 ```{python}
 #Dropping unwanted columns
@@ -183,7 +184,7 @@ first_doses_only = base_vaccine_data.drop(['Denominator', 'NumberDosesReceived',
 first_doses_only
 ```
 
-After spotting that the data included a row for each region as well as one for the full country, we then reduced the dataframe to those show the total vaccine count per country.
+After spotting that the data included a row for each region as well as one for the full country, we then reduced the dataframe to those show the total vaccine count per country. This was because in some countries regions were provided alongside an overall country 'region' row which meant vaccination counts were massively inflated - vaccinations were being counted twice in some cases.
 
 ```{python}
 #Remove regions to only get full country
@@ -191,11 +192,21 @@ total_first_dosage_count = first_doses_only[first_doses_only['ReportingCountry']
 total_first_dosage_count
 ```
 
-not sure the reason for the dropping dupes below?
+Some countries data specifically Finland had duplicated rows for the some weeks. To resolve this we removed any duplicate rows where the 'YearWeekISO', 'ReportingCountry', and 'FirstDose'column were all identical.
 
 ```{python}
 #Drop duplicate rows
 base_vaccine_data = total_first_dosage_count.drop_duplicates(subset = ['YearWeekISO', 'ReportingCountry', 'FirstDose'])
+```
+
+Given there were duplicate counts due to the 'Region' column and duplicate rows. We also deciced to check that there is no duplication or multiple counts of the same vaccine in the 'Vaccine' column denominating vaccine type. The breakdown of vaccines for the data set (https://www.ecdc.europa.eu/sites/default/files/documents/Variable_Dictionary_VaccineTracker-5-april-2023.pdf) provides info on each of the vaccines administered. 
+
+Some of the vaccines are adaptations of the general vaccine e.g. COM refers to the Pfizer BioNTech - Comirnaty whilst COMBA.4-5 refers to a variant of the COM vaccine targetting Original/Omicron BA.4/BA.5.
+
+Based on the huge numbers of the major vaccines e.g. COM, we can be confident it is a vaccine in itself and not a cumulative sum of all the COM vaccine variations.
+
+```{python}
+total_first_dosage_count.groupby('Vaccine')['FirstDose'].sum()
 ```
 
 ### Analysis
