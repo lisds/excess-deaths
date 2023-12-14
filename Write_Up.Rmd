@@ -222,44 +222,50 @@ just_means = excess_deaths_values[['Mean 2023', 'ReportingCountry']]
 ```
 
 ```{python}
-AZ = pd.merge(by_type_and_country[by_type_and_country['Vaccine'] == 'AZ'][['Vaccine','ReportingCountry','% vaxed']], just_means, on = 'ReportingCountry')
-COM = pd.merge(by_type_and_country[by_type_and_country['Vaccine'] == 'COM'][['Vaccine','ReportingCountry','% vaxed']], just_means, on = 'ReportingCountry')
-COMBA_1 = pd.merge(by_type_and_country[by_type_and_country['Vaccine'] == 'COMBA.1'][['Vaccine','ReportingCountry','% vaxed']], just_means, on = 'ReportingCountry')
-COMBA_4_5 = pd.merge(by_type_and_country[by_type_and_country['Vaccine'] == 'COMBA.4-5'][['Vaccine','ReportingCountry','% vaxed']], just_means, on = 'ReportingCountry')
-JANSS = pd.merge(by_type_and_country[by_type_and_country['Vaccine'] == 'JANSS'][['Vaccine','ReportingCountry','% vaxed']], just_means, on = 'ReportingCountry')
-MOD = pd.merge(by_type_and_country[by_type_and_country['Vaccine'] == 'MOD'][['Vaccine','ReportingCountry','% vaxed']], just_means, on = 'ReportingCountry')
-MODBA_1 = pd.merge(by_type_and_country[by_type_and_country['Vaccine'] == 'MODBA.1'][['Vaccine','ReportingCountry','% vaxed']], just_means, on = 'ReportingCountry')
-MODBA_4_5 = pd.merge(by_type_and_country[by_type_and_country['Vaccine'] == 'MODBBA.4-5'][['Vaccine','ReportingCountry','% vaxed']], just_means, on = 'ReportingCountry')
-NVXD = pd.merge(by_type_and_country[by_type_and_country['Vaccine'] == 'NVXD'][['Vaccine','ReportingCountry','% vaxed']], just_means, on = 'ReportingCountry')
-UNK = pd.merge(by_type_and_country[by_type_and_country['Vaccine'] == 'UNK'][['Vaccine','ReportingCountry','% vaxed']], just_means, on = 'ReportingCountry')
-VLA = pd.merge(by_type_and_country[by_type_and_country['Vaccine'] == 'VLA'][['Vaccine','ReportingCountry','% vaxed']], just_means, on = 'ReportingCountry')
-SPU = pd.merge(by_type_and_country[by_type_and_country['Vaccine'] == 'SPU'][['Vaccine','ReportingCountry','% vaxed']], just_means, on = 'ReportingCountry') 
-COMBIV = pd.merge(by_type_and_country[by_type_and_country['Vaccine'] == 'COMBIV'][['Vaccine','ReportingCountry','% vaxed']], just_means, on = 'ReportingCountry')         
-MODBIV = pd.merge(by_type_and_country[by_type_and_country['Vaccine'] == 'MODBIV'][['Vaccine','ReportingCountry','% vaxed']], just_means, on = 'ReportingCountry')     
-BECNBG = pd.merge(by_type_and_country[by_type_and_country['Vaccine'] == 'BECNBG'][['Vaccine','ReportingCountry','% vaxed']], just_means, on = 'ReportingCountry')               
-SGSK = pd.merge(by_type_and_country[by_type_and_country['Vaccine'] == 'SGSK'][['Vaccine','ReportingCountry','% vaxed']], just_means, on = 'ReportingCountry')         
-BHACOV = pd.merge(by_type_and_country[by_type_and_country['Vaccine'] == 'BHACOV'][['Vaccine','ReportingCountry','% vaxed']], just_means, on = 'ReportingCountry')       
-SIN = pd.merge(by_type_and_country[by_type_and_country['Vaccine'] == 'SIN'][['Vaccine','ReportingCountry','% vaxed']], just_means, on = 'ReportingCountry')
+vaccine_rename = {
+    'AZ' : 'Astrazeneca',
+    'COM' : 'Pfizer',
+    'COMBA.1' : 'PfizerBA1',
+    'COMBA.4-5' : 'PfizerBA4_5',
+    'JANSS' : 'Janssen',
+    'MOD' : 'Moderna',
+    'MODBA.1' : 'ModernaBA1',
+    'MODBBA.4-5' : 'ModernaBA4_5',
+    'NVXD' : 'Novavax',
+    'UNK' : 'Unknown',
+    'VLA' : 'Valneva',
+    'SPU' : 'Sputnik',
+    'COMBIV' : 'PfizerBA1_4_5',
+    'MODBIV' : 'ModernaBA1_4_5',
+    'BECNBG' : 'BeijingCNBG',
+    'SGSK' : 'SanofiGSK',
+    'BHACOV' : 'BharatCovaxin',
+    'SIN' : 'SinoVac'
+}
+by_type_and_country['VaccineType'] = by_type_and_country['Vaccine'].replace(vaccine_rename)
+by_type_and_country[['VaccineType']]
 ```
 
 ```{python}
-plt.scatter(AZ['% vaxed'], AZ['Mean 2023'])
-plt.title('AZ')
+vaccine_type = by_type_and_country['VaccineType'].drop_duplicates()
+vaccine_type
 ```
 
 ```{python}
-plt.scatter(COM['% vaxed'], COM['Mean 2023'])
-plt.title('COM')
+import merge
+import plot1
 ```
 
 ```{python}
-plt.scatter(MOD['% vaxed'], MOD['Mean 2023'])
-plt.title('MOD')
+vaccine_dict = merge.merge_vaccines(by_type_and_country, just_means, vaccine_type)
 ```
 
 ```{python}
-plt.scatter(JANSS['% vaxed'], JANSS['Mean 2023'])
-plt.title('JANNS')
+vaccine_dict['Astrazeneca']
+```
+
+```{python}
+plot1.plot_vax(vaccine_dict, '% vaxed', 'Mean 2023')
 ```
 
 ### Further interrogation of the results
@@ -268,9 +274,16 @@ plt.title('JANNS')
 
 ```{python}
 
+```
+
+```{python}
 
 ```
 
+
+```{python}
+
+```
 
 Text here?
 
