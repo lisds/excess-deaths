@@ -51,11 +51,29 @@ The term excess death refers to the (absolute?) difference between the number of
 
 In particular, we will be looking at all-cause excess mortality,which refers to the percentage difference in the number of people who died from any cause in a given period, compared to the expected number of deaths from any cause in that given period.
 
+It is important to note that excess death statistics have not previously been recorded at the same scale as those for the Covid-19 pandemic. As a result, it is diffiuclt to compare contemporary and historical data.
+
 We will employ multiple linear regression in order to investigate the relationship between Covid-19 vaccination and excess mortality across 31 countries (27 EU countries and 4 countries from the European Free Trade Association).
 
 - Explain reasoning for EU scope - the wealth of data across countries makes it possible to compare vaccination types etc
 
+<!-- #region -->
 ### Literature review
+
+Excess mortality post the Covid 19 pandemic had been noticed throughout 2022 in the Western World. The U.S reported a 5-12% weekly all cause excess mortality in the second half of 2022 (CDC, 2023). The UK has experienced 6 back to back quarters of excess mortaility as of September 2023 (O'Dowd, 2023). Australia recorded a 7% excess death rate (half of which is put down to Covid-19) in the first 5 months of 2023 (Adair, 2023). 
+
+There is a lack of consensus as to the cause of excess death numbers seen post pandemic. In the adjournment debate on the 20th of October 2023, former Tory mp Andrew Bridgen stated that vaccines were rushed through trials and were responsible for the observed increase. He pointed the finger at the mishandling of data by the ONS and the Medicine and Healthcare products Regulatory Agency (MHRA), that were aiming to push a pro-vacccine agenda.
+
+The UK Department for Health and Social Care dismissed these claims stating that there was no evidence to suggest that excess deaths were linked to Covid-19 vaccines. This has since been taken of the government website but can still be found [here](https://dailysceptic.org/wp-content/uploads/2023/11/Final-Briefing-on-Excess-Deaths-24-October-2023.pdf). The report had many shortcomings. Firstly, it considered all vaccine types homogenously, failing to account for variation in levels of testing and after effects across different brands/ types. There were also inconsistencies in reported number of fully unvaccinated people, deaths for certain months, methods of calculating age standardised mortaility rate. It was also built from unreliable ONS data (Jefferson and Heneghan, 2023). The risk of myo/pericarditis was shown to be elevated in those who had received the mRNA vaccine. Although the links between the two are currently not understood(Alami et al., 2023). A 2023 study showed that a one percentage point increase in 2021 vaccination uptake was associated with a monthly mortality increase in 2022 by 0.105 percent (Aarstad and Kvitastein, 2023).
+
+Other sources point towards other factors driving high excess mortality. In response to Bridgen's argument, Maria Caulfiend, the parliementary under-secretary of state for health and social care highlighted high levels of flu, strain on public services and lasting effects of Covid-19 (long covid) as key factors driving higher levels of excess deaths. The continued strain on NHS services as well as through the pandemic is argued to have caused missed and delayed diagnoses as well as longer wait times for urgent treatments (McDonald, 2022). 
+
+
+
+NEED TO FINISH OFF 
+
+
+
 
 - Excess mortality has been observed worldwide since the COVID-19 pandemic (CITE)...
 - UK parliment speech to introduce our focus on Covid-19 vaccines as a potential cause of excess death - MP mentioned that it was the single thing which affected the whole population etc
@@ -66,6 +84,7 @@ We will employ multiple linear regression in order to investigate the relationsh
 - We have chosen to focus our investigation on the EU as available datasets provide rich data on excess mortality and vaccination rates by vaccine type for 28 countries. Excess death rate also seems to vary lots across europe and a wide range of vaccine types were used across EU countries. This provides a great database to explore if any COVID-19 vaccine has a relationship with mortality rate. 
 - According to CITE, the EU has seen an excess death rate of X since 2022/3 this is in line with/lower/higher than the US, Canada, Australia etc etc.
 
+<!-- #endregion -->
 
 ### Excess mortality data 
 
