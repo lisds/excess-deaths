@@ -195,7 +195,7 @@ base_vaccine_data = pd.read_excel('data/vaccine_types.xlsx')
 base_vaccine_data.head()
 ```
 
-We decided to initally only focus on first doses of Covid-19 vaccinations so removed the other columns for now. This provides us with a simple binary measure of vaccinated or not to later calculate our population vaccination rates. 
+We decided to initally only focus on first doses of Covid-19 vaccinations so removed the other columns for now. This provides us with a simple binary measure of vaccinated or not to later calculate our population vaccination rates. Explain what first dose number means? 
 
 ```{python}
 #Dropping unwanted columns
@@ -216,6 +216,7 @@ Some countries data specifically Finland had duplicated rows for the some weeks.
 ```{python}
 #Drop duplicate rows
 base_vaccine_data = total_first_dosage_count.drop_duplicates(subset = ['YearWeekISO', 'ReportingCountry', 'FirstDose'])
+base_vaccine_data
 ```
 
 Given there were duplicate counts due to the 'Region' column and duplicate rows. We also deciced to check that there is no duplication or multiple counts of the same vaccine in the 'Vaccine' column denominating vaccine type. The breakdown of vaccines for the data set (https://www.ecdc.europa.eu/sites/default/files/documents/Variable_Dictionary_VaccineTracker-5-april-2023.pdf) provides info on each of the vaccines administered. 
@@ -227,6 +228,13 @@ Based on the huge numbers of the major vaccines e.g. COM, we can be confident it
 ```{python}
 total_first_dosage_count.groupby('Vaccine')['FirstDose'].sum()
 ```
+
+### Descriptive statistics
+
+
+- Maybe say what one row in each cleaned dataset represents? - granularity of the dataset
+- Kessia to add here descriptive stats of two datasets 
+- What is important to contextualise the data - mean excess mortality across countries, max and min death and vaccination rate etc
 
 ### Analysis
 
@@ -421,6 +429,18 @@ vaccine_dict['Astrazeneca']
 
 ```{python}
 plot1.plot_vax(vaccine_dict, '% vaxed', 'Mean 2023')
+```
+
+- Kessia to add here a dataframe of vaccination type rows and slope, r-value and p-value columns
+
+### Permutation test
+
+
+- Why are we choosing to use permutation test - fewer assumptions eg doesn't assume residuals are normally distributed. Research and add here other pros of a permutation test above linregress p-value
+- Less assumptions therefore improves the confidence in our results 
+
+```{python}
+
 ```
 
 ### Further interrogation of the results
