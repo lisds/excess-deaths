@@ -24,7 +24,7 @@ jupyter:
  To remember:
 - Need EU scope in the title?
 - ONLY homemade functions in .py files
-- check we are using excess death and excess mortality right throughout
+- check we are using excess death and excess mortality correctly throughout - different definitions
 - rename variables clearly
 - comments on lines of code
 - ARE DATASETS looking at the same list of countries?? - Excess mortality EU + EFTA countries vs Vaccine Type EU +EEA countries -> comment on this Switzerland is in EFTA but not EEA or EU
@@ -43,7 +43,7 @@ pd.set_option('mode.copy_on_write', True)
 import fetch_data
 ```
 
-### Introduction 
+## Introduction 
 
 This project aims to investigate excess all-cause mortality across EU countries post-covid-19 pandemic, and the role of Covid-19 vaccines as a potential cause. 
 
@@ -51,14 +51,14 @@ The term excess death refers to the (absolute?) difference between the number of
 
 In particular, we will be looking at all-cause excess mortality,which refers to the percentage difference in the number of people who died from any cause in a given period, compared to the expected number of deaths from any cause in that given period.
 
-It is important to note that excess death statistics have not previously been recorded at the same scale as those for the Covid-19 pandemic. As a result, it is diffiuclt to compare contemporary and historical data.
+It is important to note that excess death statistics have not previously been recorded at the same scale as those for the Covid-19 pandemic. As a result, it is difficult to compare contemporary and historical data.
 
 We will employ multiple linear regression in order to investigate the relationship between Covid-19 vaccination and excess mortality across 31 countries (27 EU countries and 4 countries from the European Free Trade Association).
 
 - Explain reasoning for EU scope - the wealth of data across countries makes it possible to compare vaccination types etc
 
 <!-- #region -->
-### Literature review
+## Literature review
 
 Excess mortality post the Covid 19 pandemic had been noticed throughout 2022 in the Western World. The U.S reported a 5-12% weekly all cause excess mortality in the second half of 2022 (CDC, 2023). The UK has experienced 6 back to back quarters of excess mortaility as of September 2023 (O'Dowd, 2023). Australia recorded a 7% excess death rate (half of which is put down to Covid-19) in the first 5 months of 2023 (Adair, 2023). 
 
@@ -71,10 +71,10 @@ Other sources point towards other factors driving high excess mortality. In resp
 
 
 NEED TO FINISH OFF 
+- lead into exploration of EU data because it includes many countries many different vaccines to explore a potential relationship between excess mortality recently observed and vaccinations   
 
 
-
-
+    
 - Excess mortality has been observed worldwide since the COVID-19 pandemic (CITE)...
 - UK parliment speech to introduce our focus on Covid-19 vaccines as a potential cause of excess death - MP mentioned that it was the single thing which affected the whole population etc
 - Trust the evidence critiqued UK report 'Trends in Excess Deaths and Covid-19 Vaccines' for referring to Covid-vaccine as singular despite varying types - we will therefore investigate each vaccine type
@@ -108,7 +108,7 @@ excess_deaths = pd.read_excel('data/excess_death.xlsx', sheet_name = 'Sheet 1', 
 excess_deaths.head()
 ```
 
-In order to work with the data we need just numerical data. This meant we had to first remove the columns which labelled the corresponding data point with NaN, p or ep - displaying whether that particular data point is confirmed, provisional or estimated provisional. Examining the data you can see that most of the data in 2021 is confirmed with a few countries remaining provisional. Data for 2022 becomes majority provisional and data for 2023 is almost all provisional. There are only 4 estimated data points in the dataset and they are all for the latest recorded month of data - September 2023. 
+In order to work with the data we need to remove any non-numerical data. This meant we had to first remove the columns which labelled the corresponding data point with NaN, p or ep - displaying whether that particular data point is confirmed, provisional or estimated provisional. Examining the data you can see that most of the data in 2021 is confirmed with a few countries remaining provisional. Data for 2022 becomes majority provisional and data for 2023 is almost all provisional. There are only 4 estimated data points in the dataset and they are all for the latest recorded month of data - September 2023. 
 
 ```{python}
 # Remove columns labelling rates that are estimated or provisional data 
@@ -119,22 +119,7 @@ excess_deaths_values = excess_deaths.loc[:, ~excess_deaths.columns.str.startswit
 # Make index country names and change index title
 excess_deaths_values = excess_deaths_values.set_index('TIME').rename_axis('Country')
 excess_deaths_values = excess_deaths_values[1:]
-excess_deaths_values
-```
-
-### First Look
-In order to get an idea of excess mortality across Europe we have calculated a mean excess mortality for the 9 recorded months of 2023 for all EU countries and the EU as a whole.
-We chose to focus on excess mortality from the beginning of 2023 because: 
-1) there have been no recorded first doses of the vaccine in 2023?? CHECK and reference
-2) excess deaths due to the COVID-19 pandemic slowed in ___ there have been very little deaths due to covid in 2023 - CHECK and reference
-3) In order to perform a fair investigation into the whether COVID-19 vaccines are playing a role in mortality we decided to use the year 2023 as a cutoff point - vaccination counts are counted up until 2023 and excess mortality mean is calculated from the beggining of 2023. In this case our study mirrors the approach taken by Aarstad and Kvitastein (2023) in their recent paper which regressed all cause mortality in the first 9 months of 2022 on vaccination uptake (at the turn of 2022).
-- ^ add in intro - we are testing what they tested with more and newer data and expanding upon their paper by looking at individual vaccine types afterwards
-
-```{python}
-# Add a mean excess death by EU country for 2023 
-excess_deaths_values = excess_deaths_values.apply(pd.to_numeric, errors='coerce')
-excess_deaths_values['Mean 2023'] = excess_deaths_values.iloc[:, -9:].mean(axis = 1)
-excess_deaths_values.sort_values('Mean 2023')
+excess_deaths_values.head()
 ```
 
 The vaccine data (yet to be read in) refers to EU countries by country code. In order to merge the data later on we need a common code for each country so that the relevant mortality data matches up to the relevant vaccination data. We chose to use country codes as they are shorter and therfore marginally easier to code with in data analysis.  
@@ -176,7 +161,7 @@ country_code_dict = {
     }
 #Adding a new column called 'ReportingCountry' with associated country codes
 excess_deaths_values['ReportingCountry'] = excess_deaths_values.index.map(country_code_dict)
-excess_deaths_values
+excess_deaths_values.head()
 
 ```
 
@@ -195,27 +180,27 @@ base_vaccine_data = pd.read_excel('data/vaccine_types.xlsx')
 base_vaccine_data.head()
 ```
 
-We decided to initally only focus on first doses of Covid-19 vaccinations so removed the other columns for now. This provides us with a simple binary measure of vaccinated or not to later calculate our population vaccination rates. Explain what first dose number means? 
+The dataset contains many columns we are not interested in we remove those columns
 
 ```{python}
 #Dropping unwanted columns
-first_doses_only = base_vaccine_data.drop(['Denominator', 'NumberDosesReceived', 'NumberDosesExported', 'FirstDoseRefused', 'SecondDose', 'DoseAdditional1', 'DoseAdditional2', 'DoseAdditional3', 'DoseAdditional4', 'DoseAdditional5', 'UnknownDose'], axis = 1)
-first_doses_only
+base_vaccine_data = base_vaccine_data.drop(['Denominator', 'NumberDosesReceived', 'NumberDosesExported', 'FirstDoseRefused', 'DoseAdditional1', 'DoseAdditional2', 'DoseAdditional3', 'DoseAdditional4', 'DoseAdditional5', 'UnknownDose'], axis = 1)
+base_vaccine_data
 ```
 
 After spotting that the data included a row for each region as well as one for the full country, we then reduced the dataframe to those show the total vaccine count per country. This was because in some countries regions were provided alongside an overall country 'region' row which meant vaccination counts were massively inflated - vaccinations were being counted twice in some cases.
 
 ```{python}
 #Remove regions to only get full country
-total_first_dosage_count = first_doses_only[first_doses_only['ReportingCountry'] == first_doses_only['Region']]
-total_first_dosage_count
+base_vaccine_data = base_vaccine_data[base_vaccine_data['ReportingCountry'] == base_vaccine_data['Region']]
+base_vaccine_data
 ```
 
 Some countries data specifically Finland had duplicated rows for the some weeks. To resolve this we removed any duplicate rows where the 'YearWeekISO', 'ReportingCountry', and 'FirstDose'column were all identical.
 
 ```{python}
 #Drop duplicate rows
-base_vaccine_data = total_first_dosage_count.drop_duplicates(subset = ['YearWeekISO', 'ReportingCountry', 'FirstDose'])
+base_vaccine_data = base_vaccine_data.drop_duplicates(subset = ['YearWeekISO', 'ReportingCountry', 'FirstDose'])
 base_vaccine_data
 ```
 
@@ -223,26 +208,61 @@ Given there were duplicate counts due to the 'Region' column and duplicate rows.
 
 Some of the vaccines are adaptations of the general vaccine e.g. COM refers to the Pfizer BioNTech - Comirnaty whilst COMBA.4-5 refers to a variant of the COM vaccine targetting Original/Omicron BA.4/BA.5.
 
-Based on the huge numbers of the major vaccines e.g. COM, we can be confident it is a vaccine in itself and not a cumulative sum of all the COM vaccine variations.
+Based on the huge numbers of the major vaccines e.g. COM, we can be confident they are vaccines themselves and not cumulative sums of all the COM vaccine variations.
 
 ```{python}
-total_first_dosage_count.groupby('Vaccine')['FirstDose'].sum()
+base_vaccine_data.groupby('Vaccine')['FirstDose'].sum()
 ```
 
-### Descriptive statistics
+#### Descriptive statistics
 
 
 - Maybe say what one row in each cleaned dataset represents? - granularity of the dataset
 - Kessia to add here descriptive stats of two datasets 
 - What is important to contextualise the data - mean excess mortality across countries, max and min death and vaccination rate etc
 
-### Analysis
+## Analysis
 
-##### Inital regression of mean excess mortality against vaccination percentage for EU countries
+### First Look
+In order to get an idea of excess mortality across Europe we have calculated a mean excess mortality for the 9 recorded months of 2023 for all EU countries and the EU as a whole.
+We chose to focus on excess mortality from the beginning of 2023 because: 
+1) the majority of COVID-19 vaccines were administered in 2021 and 2022
+
 
 ```{python}
 #Adding a year column
 base_vaccine_data['Year'] = base_vaccine_data['YearWeekISO'].str[:4].str.strip()
+#Displaying counts of first vaccination dose by year
+base_vaccine_data.groupby('Year')['FirstDose'].sum()
+```
+
+```{python}
+#Displaying counts of second vaccination dose by year
+base_vaccine_data.groupby('Year')['SecondDose'].sum()
+```
+
+2) excess deaths due to the COVID-19 pandemic slowed in ___ there have been very little deaths due to covid in 2023 - CHECK and reference
+3) In order to perform a fair investigation into the whether COVID-19 vaccines are playing a role in mortality we decided to use the year 2023 as a cutoff point - vaccination counts are counted up until 2023 and excess mortality mean is calculated from the beggining of 2023. In this case our study mirrors the approach taken by Aarstad and Kvitastein (2023) in their recent paper which regressed all cause mortality in the first 9 months of 2022 on vaccination uptake (at the turn of 2022).
+- ^ add in intro - we are testing what they tested with more and newer data and expanding upon their paper by looking at individual vaccine types afterwards
+
+```{python}
+# Select only months for 2023
+months_2023 = ['2023-01', '2023-02', '2023-03', '2023-04', '2023-05', '2023-06', '2023-07', '2023-08', '2023-09']
+
+# Add a mean excess all cause mortality by EU country for 2023 
+excess_deaths_values['Mean 2023'] = excess_deaths_values[months_2023].apply(pd.to_numeric, errors='coerce').mean(axis = 1)
+
+# Sort in order of excess all cause mortality for 2023
+excess_deaths_values.sort_values('Mean 2023')
+```
+
+##### Inital regression of mean excess mortality against vaccination percentage for EU countries
+
+
+-- Explain Everything: 
+
+
+```{python}
 
 #Working out the number of people in each country vaxed by the end of 2022, filtering so only data for 'ALL' target group is considered as age specific counts were unreliable, summing the first dose after grouping by target group and reporting country
 total_vaxed_up_to_23 = base_vaccine_data[base_vaccine_data['Year'] != '2023'][base_vaccine_data['TargetGroup'] == 'ALL'].groupby('ReportingCountry')['FirstDose'].sum()
