@@ -52,5 +52,5 @@ def permute(Vax1_str, Vax2_str):
         fakeVax2 = sps.linregress(shuff[len(first_array):], vaccine_dict[Vax2_str]['Mean 2023'])
         fake_diff = fakeVax1.slope - fakeVax2.slope
         fake_difference[i] = fake_diff
-        diff_act = np.count_nonzero(fake_difference <= SDIFF)
+        diff_act = np.count_nonzero(fake_difference <= real_diff)
     return plt.hist(fake_difference) and diff_act;
