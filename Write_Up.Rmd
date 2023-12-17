@@ -19,12 +19,11 @@ jupyter:
       version_minor: 0
 ---
 
-# Is there a link between certain Covid-19 vaccines and 2023 excess all-cause mortality?
+# Is there a link between certain Covid-19 vaccines and 2023 excess all-cause mortality in the EU?
 
  To remember:
-- Need EU scope in the title?
 - ONLY homemade functions in .py files
-- check we are using excess death and excess mortality correctly throughout - different definitions
+- Check we are using excess death and excess mortality correctly throughout
 - rename variables clearly
 - comments on lines of code
 - ARE DATASETS looking at the same list of countries?? - Excess mortality EU + EFTA countries vs Vaccine Type EU +EEA countries -> comment on this Switzerland is in EFTA but not EEA or EU
@@ -49,7 +48,7 @@ This project aims to investigate excess all-cause mortality across EU countries 
 
 The term excess death refers to the (absolute?) difference between the number of observed and expected deaths (CITE) in a given period. To better enable comparisons across countries with large diferrence in population, this project investigates excess *mortality*, which refers to the percentage difference between the observed and expected number of deaths.
 
-In particular, we will be looking at all-cause excess mortality,which refers to the percentage difference in the number of people who died from any cause in a given period, compared to the expected number of deaths from any cause in that given period.
+In particular, we will be looking at all-cause excess mortality, which refers to the percentage difference in the number of people who died from any cause in a given period, compared to the expected number of deaths from any cause in that given period.
 
 It is important to note that excess death statistics have not previously been recorded at the same scale as those for the Covid-19 pandemic. As a result, it is difficult to compare contemporary and historical data.
 
@@ -119,7 +118,7 @@ excess_deaths_values = excess_deaths.loc[:, ~excess_deaths.columns.str.startswit
 # Make index country names and change index title
 excess_deaths_values = excess_deaths_values.set_index('TIME').rename_axis('Country')
 excess_deaths_values = excess_deaths_values[1:]
-excess_deaths_values.head()
+excess_deaths_values.head(40)
 ```
 
 The vaccine data (yet to be read in) refers to EU countries by country code. In order to merge the data later on we need a common code for each country so that the relevant mortality data matches up to the relevant vaccination data. We chose to use country codes as they are shorter and therfore marginally easier to code with in data analysis.  
@@ -204,6 +203,10 @@ base_vaccine_data = base_vaccine_data.drop_duplicates(subset = ['YearWeekISO', '
 base_vaccine_data
 ```
 
+```{python}
+base_vaccine_data['ReportingCountry'].value_counts()
+```
+
 Given there were duplicate counts due to the 'Region' column and duplicate rows. We also deciced to check that there is no duplication or multiple counts of the same vaccine in the 'Vaccine' column denominating vaccine type. The breakdown of vaccines for the data set (https://www.ecdc.europa.eu/sites/default/files/documents/Variable_Dictionary_VaccineTracker-5-april-2023.pdf) provides info on each of the vaccines administered. 
 
 Some of the vaccines are adaptations of the general vaccine e.g. COM refers to the Pfizer BioNTech - Comirnaty whilst COMBA.4-5 refers to a variant of the COM vaccine targetting Original/Omicron BA.4/BA.5.
@@ -219,7 +222,7 @@ base_vaccine_data.groupby('Vaccine')['FirstDose'].sum()
 
 - Maybe say what one row in each cleaned dataset represents? - granularity of the dataset
 - Kessia to add here descriptive stats of two datasets 
-- What is important to contextualise the data - mean excess mortality across countries, max and min death and vaccination rate etc
+- What is important to contextualise the data - mean excess mortality across countries, max and min mortality and vaccination rate etc
 
 ## Analysis
 
@@ -258,9 +261,12 @@ excess_deaths_values.sort_values('Mean 2023')
 
 ##### Inital regression of mean excess mortality against vaccination percentage for EU countries
 
-
+<!-- #region -->
 -- Explain Everything: 
 
+
+- When explain merge highlight the fact that two of the columns from the excess mortality dataframe are lost 
+<!-- #endregion -->
 
 ```{python}
 
@@ -276,12 +282,16 @@ percent_vaxed_wk1_23
 
 just_code_and_mean = excess_deaths_values[['ReportingCountry', 'Mean 2023']]
 
-#Merging the data frames on the ReportingCountry column, resulting in a data frame with ReportingCountry code, mean excess deaths in 2023 and 
+#Merging the data frames on the ReportingCountry column, resulting in a data frame with ReportingCountry code, mean excess mortality in 2023 and 
 # % of population vaxed as of the end of 2022
 merged = pd.merge(just_code_and_mean, pd.DataFrame(percent_vaxed_wk1_23), on = 'ReportingCountry')
 
-#Regressing  the percent vaxed against the mean excess deaths
+#Regressing  the percent vaxed against the mean excess mortality
 regression = sps.linregress(merged[0], merged['Mean 2023'])
+```
+
+```{python}
+print(merged)
 ```
 
 ```{python}
@@ -293,8 +303,8 @@ for i in range(len(merged)):
     plt.text(merged[0][i] + 0.01, merged['Mean 2023'][i], merged['ReportingCountry'][i], fontsize=8)
  
 plt.xlabel('Percent Vaccinated as of 2023')
-plt.ylabel('Mean Excess Deaths 2023')
-plt.title('Vaccination uptake versus mean excess deaths')
+plt.ylabel('Mean Excess Mortality 2023')
+plt.title('Vaccination uptake versus mean excess mortality')
 plt.plot(percent_vaxed_wk1_23, regression[1] + regression[0]*percent_vaxed_wk1_23, 'r', label='fitted line')
 
 plt.show()
@@ -347,7 +357,7 @@ def plot_with_errors(x_values, y_values, c, s):
 #A plot to demonstrate the acutal values, predicted values and residual error
 plot_with_errors(merged[0], merged['Mean 2023'], regression.intercept, regression.slope)
 plt.xlabel('Percent Vaccinated as of 2023')
-plt.ylabel('Mean Excess Deaths 2023')
+plt.ylabel('Mean Excess Mortality 2023')
 plt.title('Depicting residual error')
 ```
 
@@ -370,12 +380,12 @@ As there doesn't appear to be a pattern in how the residuals are distributed fro
 
 ##### Assumptions/limitations
 
-- Using vaccination percentage up to 2023 then mean deaths since start of 2023
-- Mean death across 2023 could flatten the seasonality of excess death?
+- Using vaccination percentage up to 2023 then mean mortality since start of 2023
+- Mean mortality across 2023 could flatten the seasonality of excess mortality?
 - Just focusing on first doses
 - Not done by vaccination type....
 - Myabe think about additional doses
-- We know it is correlated but the question is whether vaccination rate impacted excess death - look into confounding variables 
+- We know it is correlated but the question is whether vaccination rate impacted excess mortality - look into confounding variables 
 
 ##### Regression of mean excess mortality against vaccination percentage for EU countries by vaccination 
 
