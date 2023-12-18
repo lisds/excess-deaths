@@ -106,6 +106,10 @@ dirty_mortality = pd.read_excel('data/excess_death.xlsx', sheet_name = 'Sheet 1'
 dirty_mortality.head()
 ```
 
+```{python}
+drop_labels = dirty_mortality.drop(index= 0)
+```
+
 We need to remove any non-numerical data. This meant we had to first remove the columns which labelled the corresponding data point with NaN, p or ep (confirmed, provisional or estimated provisional). Examining the data you can see that most of the data in 2021 is confirmed with a few countries remaining provisional. Data for 2022 becomes majority provisional and data for 2023 is almost all provisional. There are only 4 estimated data points in the dataset and they are all for the latest recorded month of data - September 2023. 
 
 
@@ -114,7 +118,7 @@ We need to remove any non-numerical data. This meant we had to first remove the 
 
 ```{python}
 # Remove columns labelling rates that are estimated or provisional data 
-only_numbers = dirty_mortality.loc[:, ~dirty_mortality.columns.str.startswith('Unnamed')]
+only_numbers = drop_labels.loc[:, ~drop_labels.columns.str.startswith('Unnamed')]
 ```
 
 We then had to set the index as the country names, and relabelled the index 'Country'.
@@ -258,11 +262,15 @@ vaccine_data.describe().apply(lambda s: s.apply('{0:.5f}'.format))
 
 - FIX THIS AND REFLECT ON IT - POINT OUT THE MOST IMPORTANT THINGS TO CONTEXTUALISE THE DATA
 
-### First Look
-In order to get an idea of excess mortality across Europe we have calculated a mean excess mortality for the 9 recorded months of 2023 for all EU countries and the EU as a whole.
-We chose to focus on excess mortality from the beginning of 2023 because: 
-1) the majority of COVID-19 vaccines were administered in 2021 and 2022
+### Preliminary Analysis
 
+We will begin with a preliminary analysis for 2023 to see whether uptake of Covid-19 vaccines in general have a relationship with excess mortality across european countries. 
+
+In order to get an idea of excess mortality across Europe we have calculated a mean excess mortality for the 9 recorded months of 2023 for all EU countries and the EU as a whole. We chose to focus on excess mortality from the beginning of 2023 because the majority of COVID-19 vaccines were administered in 2021 and 2022. 
+
+Our initial regression mirrors the approach taken by Aarstad and Kvitastein (2023) in their recent paper which regressed all cause mortality in the first 9 months of 2022 on vaccination uptake (at the turn of 2022) but expands upon it with more first doses of vaccines having been administered in 2022 providing a larger set of data points.
+
+This provides a cutoff point for a 'fair' investigation - vaccination counts are counted up until 2023 and excess mortality mean is calculated from the beggining of 2023.
 
 ```{python}
 #Adding a year column
@@ -272,27 +280,6 @@ vaccine_data.groupby('Year')['FirstDose'].sum()
 ```
 
 ```{python}
-#Displaying counts of second vaccination dose by year
-vaccine_data.groupby('Year')['SecondDose'].sum()
-```
-
-2) excess deaths due to the COVID-19 pandemic slowed in ___ there have been very little deaths due to covid in 2023 - CHECK and reference
-
-
-```{python}
-plt.plot(excess_mortality.columns, excess_mortality.loc['European Union - 27 countries (from 2020)'])
-```
-
-This is interesting - with the basis being 2016-2019 data we have a consistent raise in mortality  
-
-- We would expect mortality to drop into negative post Covid because all the people who have died can't die again - though this makes the assumption that Covid disproportionally killed vulnerable people
-- With the basis
-
-
-3) In order to perform a fair investigation into the whether COVID-19 vaccines are playing a role in mortality we decided to use the year 2023 as a cutoff point - vaccination counts are counted up until 2023 and excess mortality mean is calculated from the beggining of 2023. In this case our study mirrors the approach taken by Aarstad and Kvitastein (2023) in their recent paper which regressed all cause mortality in the first 9 months of 2022 on vaccination uptake (at the turn of 2022).
-- ^ add in intro - we are testing what they tested with more and newer data and expanding upon their paper by looking at individual vaccine types afterwards
-
-```{python}
 # Select only months for 2023
 months_2023 = ['2023-01', '2023-02', '2023-03', '2023-04', '2023-05', '2023-06', '2023-07', '2023-08', '2023-09']
 
@@ -300,17 +287,19 @@ months_2023 = ['2023-01', '2023-02', '2023-03', '2023-04', '2023-05', '2023-06',
 excess_mortality['Mean 2023'] = excess_mortality[months_2023].apply(pd.to_numeric, errors='coerce').mean(axis = 1)
 
 # Sort in order of excess all cause mortality for 2023
-excess_mortality.sort_values('Mean 2023')
+excess_mortality.sort_values('Mean 2023').head()
 ```
 
 ```{python}
-#plt.hist(excess_mortality.index, excess_mortality['Mean 2023'])
+
+plt.bar(x=excess_mortality.index, height=excess_mortality['Mean 2023'])
+plt.xticks(rotation=90)
 ```
 
 ##### Inital regression of mean excess mortality against vaccination percentage for EU countries
 
 
-To allow for population size we needed to calculate the percentage of countries that had been vaccinated.
+To allow for population size we needed to calculate the proportion of indidividuals in countries that had been vaccinated.
 
 The first dose column contains the number of first dose vaccines administered to individuals during the reporting week. We summed all of these values up unitl 2023, to get a total number of people in each country who had received a first dose of any type of vaccine. By selecting first dose only, we used a binary categorisation i.e., vaccinated or not.
  
