@@ -1,5 +1,6 @@
 
 import matplotlib.pyplot as plt
+import numpy as np
 
 def plot_with_errors(x_values, y_values, c, s):
     
