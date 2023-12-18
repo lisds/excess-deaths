@@ -386,27 +386,6 @@ In order to check whether linear regression is an appropriate technique to inves
 The following plot demonstrates the residual error in terms of vertical distance between each data point and each fitted value.
 
 ```{python}
-#Creating a function for the residual error plot
-#def plot_with_errors(x_values, y_values, c, s):
-    
-    #predicted = c + s * x_values
-    
-    #errors = y_values - predicted
-    
-    #plt.plot(x_values, y_values, 'o', color='blue')
-    #plt.plot(x_values, predicted, 'o', color='red')
-    
-    #for i in np.arange(len(x_values)):
-     #   x = x_values[i]
-      #  y_0 = predicted[i]
-       # y_1 = y_values[i]
-       # plt.plot([x, x], [y_0, y_1], ':', color='black', linewidth=1)
-    #return np.sqrt(np.mean(errors ** 2))
-```
-
-- NEED TO MOVE THIS FUNCTION TO A PY FILE ^^
-
-```{python}
 #A plot to demonstrate the acutal values, predicted values and residual error
 import residual_plot
 residual_plot.plot_with_errors(merged[0], merged['Mean 2023'], regression.intercept, regression.slope)
@@ -415,7 +394,7 @@ plt.ylabel('Mean Excess Mortality 2023')
 plt.title('Depicting residual error')
 ```
 
-We used a residual vs fitted value plot to check whether the relationship between a country's percentage of vaccinated individals and its excess mortality, is adequately captured by a linear model.
+We used a residual vs fitted value plot to check whether the relationship between a country' percentage of vaccinated individals and its excess mortality, is adequately captured by a linear model.
 
 ```{python}
 # Checking for linearity
@@ -454,14 +433,16 @@ This histogram doesn't help us very much, as it doesn't look bell-shaped but als
 - Using vaccination percentage up to 2023 then mean mortality since start of 2023
 - Mean mortality across 2023 could flatten the seasonality of excess mortality?
 - Just focusing on first doses
-- Not done by vaccination type....
-- Myabe think about additional doses
 - We know it is correlated but the question is whether vaccination rate impacted excess mortality - look into confounding variables 
 
 ##### Regression of mean excess mortality against vaccination percentage for EU countries by vaccination 
 
 
-- Import py file with Daniel's function to generalise vaccine type plots 
+So far, we have only investigated whether there seems to be a relationship between the percentage of vaccinated individuals and 2023 excess mortality across EU countries. We have only explored this in terms of vaccination *by any* Covid-19 vaccine. 
+
+However, our vaccination data includes the monthly number of first doses by each vaccination type (for each country). Furthermore, WRITE HERE THAT IT IS WELL KNOWN THAT THERE ARE DIFFERENT TECHNOLOGIES WHICH EACH VACCINE TYPE USES - and therefore it is likely that each vaccine type could have a different impact on the health of individuals, and therefore excess mortality.
+
+Therefore, we decided to plot a linear regression of percentage vaccinated against excess mortality for each Covid-19 vaccination type. 
 
 ```{python}
 by_type_and_country = vaccine_data[(vaccine_data['Year'] != '2023') & (vaccine_data['TargetGroup'] == 'ALL')].groupby(['ReportingCountry','Vaccine'])['FirstDose'].sum()
@@ -522,14 +503,15 @@ import plot1
 
 ```{python}
 vaccine_dict = merge.merge_vaccines(by_type_and_country, just_means, vaccine_type)
-```
-
-```{python}
-vaccine_dict['Astrazeneca']
+vaccine_dict
 ```
 
 ```{python}
 plot1.plot_vax(vaccine_dict, '% vaxed', 'Mean 2023')
+```
+
+```{python}
+
 ```
 
 - Kessia to add here a dataframe of vaccination type rows and slope, r-value and p-value columns
