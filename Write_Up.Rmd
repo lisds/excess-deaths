@@ -31,6 +31,10 @@ jupyter:
 - justify use of our specific datasets - are there other datasets looking at same thing
 
 ```{python}
+#test change to pull 
+```
+
+```{python}
 #Importing necessary libraries 
 import pandas as pd
 import numpy as np
@@ -300,7 +304,7 @@ excess_mortality.sort_values('Mean 2023')
 ```
 
 ```{python}
-plt.hist(excess_mortality.index, excess_mortality['Mean 2023'])
+#plt.hist(excess_mortality.index, excess_mortality['Mean 2023'])
 ```
 
 ##### Inital regression of mean excess mortality against vaccination percentage for EU countries
