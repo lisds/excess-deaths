@@ -39,7 +39,11 @@ import scipy.stats as sps
 
 # Safe setting for Pandas.  Needs Pandas version >= 1.5.
 pd.set_option('mode.copy_on_write', True)
+```
 
+Running the following line of code will fetch the vaccination data we will use in our project, however due to issues obtaining a direct download link for the excess mortality data, please refer to the README.md file for further instructions before proceeding with the rest of this notebook. 
+
+```{python}
 #Importing our fetch data file 
 import fetch_data
 ```
@@ -54,7 +58,7 @@ Excess all-cause mortality, which measures the deviation between observed and ex
 
 The inclusion of 30 European countries in our study provides a rich dataset that enables us to investigate potential links between different vaccination types and variations in excess all-cause mortality. This research seeks to uncover insights into the factors influencing post-pandemic mortality patterns.
 
-<!-- #region jp-MarkdownHeadingCollapsed=true -->
+<!-- #region -->
 ## Literature review
 
 Excess mortality following the COVID-19 pandemic has raised concerns globally. Various countries have reported significant deviations from expected mortality rates. Notably, the United States witnessed a substantial 5-12% weekly increase in all-cause excess mortality during the latter half of 2022 (CDC, 2023). Similarly, the United Kingdom experienced six consecutive quarters of excess mortality as of September 2023 (O'Dowd, 2023), and Australia recorded a 7% excess death rate in the first five months of 2023, through attributed half of these deaths to COVID-19 (Adair, 2023). 
@@ -208,14 +212,47 @@ Based on the huge numbers of the major vaccines e.g. COM, we can be confident th
 vaccine_data.groupby('Vaccine')['FirstDose'].sum()
 ```
 
+## Analysis
+
 ### Descriptive statistics
 
 
-- Describe granularity of the datasets - what each row represents
-- Also descriptive stat of two datasets 
-- ^^ Think about which statsistics are important to contextualise the data - mean excess mortality across countries, max and min mortality and vaccination rate etc
+After cleaning our data, we have obtained the following dataframe for excess mortality:
 
-## Analysis
+```{python}
+excess_mortality.head()
+```
+
+Each row of the dataframe corresponds to a reporting country, and the values within each row the correspond to that country's percentage difference in deaths from any cause in that month, in comparison to the average monthly deaths in 2016-2019.
+
+
+And the following dataframe for Covid-19 vaccination:
+
+```{python}
+vaccine_data.head()
+```
+
+Each row in this dataframe represents - HOW TO SAY THIS ???
+
+
+The following dataframe summarise the excess mortality data:
+
+```{python}
+# Creating a dataframe to describe the data
+excess_mortality.describe()
+```
+
+- FIX THIS AND REFLECT ON IT - POINT OUT THE MOST IMPORTANT THINGS TO CONTEXTUALISE THE DATA
+
+
+The following dataframe summarises the vaccination data:
+
+```{python}
+# Creating a dataframe to describe the data - using a function to remove the scientific notation output
+vaccine_data.describe().apply(lambda s: s.apply('{0:.5f}'.format))
+```
+
+- FIX THIS AND REFLECT ON IT - POINT OUT THE MOST IMPORTANT THINGS TO CONTEXTUALISE THE DATA
 
 ### First Look
 In order to get an idea of excess mortality across Europe we have calculated a mean excess mortality for the 9 recorded months of 2023 for all EU countries and the EU as a whole.
@@ -335,39 +372,60 @@ A very small p-value of 0.0003 enables us to have high confidence that the obser
 
 
 
-In order to check whether the relationship between a country's percentage of vaccinated individals and its excess mortality is best represented by a straight line, we then decided to plot the distribution of the residual errors from the above linear regression.
+In order to check whether linear regression is an appropriate technique to investigate the relationship between a country's percentage of vaccinated individals and its excess mortality, we then decided to explore the residual errors from the above linear regression.
 
 
-First we decided to create a plot demonstrating the residual errors for each data point.
+The following plot demonstrates the residual error in terms of vertical distance between each data point and each fitted value.
 
 ```{python}
 #Creating a function for the residual error plot
-def plot_with_errors(x_values, y_values, c, s):
+#def plot_with_errors(x_values, y_values, c, s):
     
-    predicted = c + s * x_values
+    #predicted = c + s * x_values
     
-    errors = y_values - predicted
+    #errors = y_values - predicted
     
-    plt.plot(x_values, y_values, 'o', color='blue')
-    plt.plot(x_values, predicted, 'o', color='red')
+    #plt.plot(x_values, y_values, 'o', color='blue')
+    #plt.plot(x_values, predicted, 'o', color='red')
     
-    for i in np.arange(len(x_values)):
-        x = x_values[i]
-        y_0 = predicted[i]
-        y_1 = y_values[i]
-        plt.plot([x, x], [y_0, y_1], ':', color='black', linewidth=1)
-    return np.sqrt(np.mean(errors ** 2))
+    #for i in np.arange(len(x_values)):
+     #   x = x_values[i]
+      #  y_0 = predicted[i]
+       # y_1 = y_values[i]
+       # plt.plot([x, x], [y_0, y_1], ':', color='black', linewidth=1)
+    #return np.sqrt(np.mean(errors ** 2))
 ```
+
+- NEED TO MOVE THIS FUNCTION TO A PY FILE ^^
 
 ```{python}
 #A plot to demonstrate the acutal values, predicted values and residual error
-plot_with_errors(merged[0], merged['Mean 2023'], regression.intercept, regression.slope)
+import residual_plot
+residual_plot.plot_with_errors(merged[0], merged['Mean 2023'], regression.intercept, regression.slope)
 plt.xlabel('Percent Vaccinated as of 2023')
 plt.ylabel('Mean Excess Mortality 2023')
 plt.title('Depicting residual error')
 ```
 
-And then plotted the distribution of the residual errors.
+We used a residual vs fitted value plot to check whether the relationship between a country's percentage of vaccinated individals and its excess mortality, is adequately captured by a linear model.
+
+```{python}
+# Checking for linearity
+predicted = regression.intercept + regression.slope * merged[0]
+residual = merged['Mean 2023'] - predicted
+plt.scatter(x=predicted, y=residual, color='blue')
+plt.title('Residuals vs. Fitted Values Plot')
+plt.xlabel('Fitted Values')
+plt.ylabel('Residuals')
+# Add a horizontal line at y=0 for reference
+plt.axhline(y=0, color='red', linestyle='--', linewidth=1) 
+plt.show()
+```
+
+ Ideally, the residuals should be randomly scattered around zero, and there should be no discernible pattern. As there doesn't appear to be a discernable pattern in how the residuals are distributed from left to right, and they look randomly scattered around zero, we can be relatively confident of a linear relationship between the percentage of vaccinated individuals in a country and mean 2023 excess mortality.
+
+
+We then checked whether the assumption made by linear regression that the residual errors follow a normal distribution was correct, using a histogram plot. 
 
 ```{python}
 #Plotting a histogram of the residual errors
@@ -378,11 +436,10 @@ plt.ylabel('Frequency')
 plt.title('Plotting the distribution of the residual errors')
 ```
 
-<!-- #region -->
-As there doesn't appear to be a pattern in how the residuals are distributed from left to right, we can be relatively confident of a linear relationship between the percentage of vaccinated individuals in a country and mean 2023 excess mortality.
+This histogram doesn't help us very much, as it doesn't look bell-shaped but also doesn't give us a very good idea of what the distribution is.
 
-#### CHECK THIS WITH MATTHEW ^^^
-<!-- #endregion -->
+
+- EXPAND ON THIS FURTHER - maybe speak to matthew
 
 ##### Assumptions/limitations
 
