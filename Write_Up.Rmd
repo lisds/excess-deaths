@@ -54,7 +54,7 @@ There is ongoing debate in public health discourse about the relationship betwee
 
 This project seeks to explore whether there is an association between excess all-cause mortality seen across European Union (EU) countries post-Covid 19 pandemic and Covid-19 vaccines. Our investigation spans 30 countries, encompassing the 27 EU member states, along with Norway, Iceland, and Liechtenstein.
 
-Excess all-cause mortality, which measures the deviation between observed and expected deaths in a given period, provides a  lens through which we can assess the macro level impacts of the pandemic and vaccination efforts. To explore the relationship between Covid-19 vaccination and excess all-cause mortality, we utilise linear regression as our primary analytical approach.
+Excess all-cause mortality, which measures the percentage deviation between observed and expected deaths from any cause in a given period, provides a  lens through which we can assess the macro level impacts of the pandemic and vaccination efforts. To explore the relationship between Covid-19 vaccination and excess all-cause mortality, we utilise linear regression as our primary analytical approach.
 
 The inclusion of 30 European countries in our study provides a rich dataset that enables us to investigate potential links between different vaccination types and variations in excess all-cause mortality. This research seeks to uncover insights into the factors influencing post-pandemic mortality patterns.
 
@@ -325,8 +325,6 @@ population_wk1_23 = vaccine_data[vaccine_data['YearWeekISO'] == '2023-W01'].grou
 #Converting the number of people vaccinated into a proportion of the population
 percent_vaxed_wk1_23= total_vaxed_up_to_23/population_wk1_23 * 100
 percent_vaxed_wk1_23
-
-
 ```
 
 To run the regression we selected the mean 2023 and reporting country column from the excess mortality dataframe. We merged this with the percentage vaccinated column to create a dataframe with percentage vaccinated, mean excess deaths in 2023 for each country. When doing this we were unable to preserve data for Switzerland for both the total EU and Switzerland as these were not included in the vaccine dataset. 
@@ -335,6 +333,10 @@ To run the regression we selected the mean 2023 and reporting country column fro
 just_code_and_mean = excess_mortality[['ReportingCountry', 'Mean 2023']]
 merged = pd.merge(just_code_and_mean, pd.DataFrame(percent_vaxed_wk1_23), on = 'ReportingCountry').rename(columns ={0: '% Vaxed'})
 merged.head()
+```
+
+```{python}
+regression = sps.linregress(merged['% Vaxed'], merged['Mean 2023'])
 ```
 
 ```{python}
@@ -369,7 +371,7 @@ The following plot demonstrates the residual error in terms of vertical distance
 ```{python}
 #A plot to demonstrate the acutal values, predicted values and residual error
 import residual_plot
-residual_plot.plot_with_errors(merged[0], merged['Mean 2023'], regression.intercept, regression.slope)
+residual_plot.plot_with_errors(merged['% Vaxed'], merged['Mean 2023'], regression.intercept, regression.slope)
 plt.xlabel('Percent Vaccinated as of 2023')
 plt.ylabel('Mean Excess Mortality 2023')
 plt.title('Depicting residual error')
@@ -379,7 +381,7 @@ We used a residual vs fitted value plot to check whether the relationship betwee
 
 ```{python}
 # Checking for linearity
-predicted = regression.intercept + regression.slope * merged[0]
+predicted = regression.intercept + regression.slope * merged['% Vaxed']
 residual = merged['Mean 2023'] - predicted
 plt.scatter(x=predicted, y=residual, color='blue')
 plt.title('Residuals vs. Fitted Values Plot')
@@ -397,7 +399,7 @@ We then checked whether the assumption made by linear regression that the residu
 
 ```{python}
 #Plotting a histogram of the residual errors
-predicted = regression.intercept + regression.slope * merged[0]
+predicted = regression.intercept + regression.slope * merged['% Vaxed']
 plt.hist(merged['Mean 2023'] - predicted)
 plt.xlabel('Residual error')
 plt.ylabel('Frequency')
@@ -484,7 +486,7 @@ import plot1
 
 ```{python}
 vaccine_dict = merge.merge_vaccines(by_type_and_country, just_means, vaccine_type)
-vaccine_dict
+#vaccine_dict
 ```
 
 ```{python}
