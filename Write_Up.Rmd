@@ -349,8 +349,10 @@ plt.show()
 ```
 
 This initial linear regression plot yielded a correlation coefficient of 0.63, indicating a moderate postitive correlation between mean 2023 excess all-cause mortality and the percentage of the population that was vaccinated at the end of 2022. The positive correlation suggests that the higher a country's proportion of vaccinated individuals, the higher their levels of excess all-cause mortality. The gradient of the best fit line suggests that for every 1% incresase in vaccination uptake a 0.344% increase in excess mortaility is to be expected. A very small p-value of 0.0003 enables us to have high confidence that the observed correlation did not arise from our null-model of no correlation.
- 
-Our analysis is not sufficiently robust to provide evidence of a causal relationship between vaccination uptake in 2022 and excess mortaility in 2023. We have not allowed for confounding variables. In addition, regression assumes a linear realtionship between the two variables, which may not be the case. 
+
+We will now check whether linear regression is appropriate technique to investigate the relationship between percentage vaccination up take pre 2023 and mean excess mortality in 2023.
+
+** dont need to reference causality yet will do that later
 
 ##### Residual error plot
 
@@ -548,9 +550,14 @@ When running the above code the closer you get to 5000 the less significant the 
 
 ### Further interrogation of the results
 
+__Major limitations__ - look into potential known known confounders
+
+Age, flu, health service strain
 
 
 
+
+__Explore Commonalities__ between similar groupings of countries. Which countries bought certain vaccines - are there any commonalities. 
 
 ### Conclusion
 
