@@ -31,6 +31,10 @@ jupyter:
 - justify use of our specific datasets - are there other datasets looking at same thing
 
 ```{python}
+#test change to pull 
+```
+
+```{python}
 #Importing necessary libraries 
 import pandas as pd
 import numpy as np
@@ -54,7 +58,7 @@ There is ongoing debate in public health discourse about the relationship betwee
 
 This project seeks to explore whether there is an association between excess all-cause mortality seen across European Union (EU) countries post-Covid 19 pandemic and Covid-19 vaccines. Our investigation spans 30 countries, encompassing the 27 EU member states, along with Norway, Iceland, and Liechtenstein.
 
-Excess all-cause mortality, which measures the deviation between observed and expected deaths in a given period, provides a  lens through which we can assess the macro level impacts of the pandemic and vaccination efforts. To explore the relationship between Covid-19 vaccination and excess all-cause mortality, we utilise linear regression as our primary analytical approach.
+Excess all-cause mortality, which measures the percentage deviation between observed and expected deaths from any cause in a given period, provides a  lens through which we can assess the macro level impacts of the pandemic and vaccination efforts. To explore the relationship between Covid-19 vaccination and excess all-cause mortality, we utilise linear regression as our primary analytical approach.
 
 The inclusion of 30 European countries in our study provides a rich dataset that enables us to investigate potential links between different vaccination types and variations in excess all-cause mortality. This research seeks to uncover insights into the factors influencing post-pandemic mortality patterns.
 
@@ -287,6 +291,7 @@ excess_mortality.sort_values('Mean 2023').head()
 ```
 
 ```{python}
+
 plt.bar(x=excess_mortality.index, height=excess_mortality['Mean 2023'])
 plt.xticks(rotation=90)
 ```
@@ -313,8 +318,6 @@ population_wk1_23 = vaccine_data[vaccine_data['YearWeekISO'] == '2023-W01'].grou
 #Converting the number of people vaccinated into a proportion of the population
 percent_vaxed_wk1_23= total_vaxed_up_to_23/population_wk1_23 * 100
 percent_vaxed_wk1_23
-
-
 ```
 
 To run the regression we selected the mean 2023 and reporting country column from the excess mortality dataframe. We merged this with the percentage vaccinated column to create a dataframe with percentage vaccinated, mean excess deaths in 2023 for each country. When doing this we were unable to preserve data for Switzerland for both the total EU and Switzerland as these were not included in the vaccine dataset. 
@@ -323,6 +326,10 @@ To run the regression we selected the mean 2023 and reporting country column fro
 just_code_and_mean = excess_mortality[['ReportingCountry', 'Mean 2023']]
 merged = pd.merge(just_code_and_mean, pd.DataFrame(percent_vaxed_wk1_23), on = 'ReportingCountry').rename(columns ={0: '% Vaxed'})
 merged.head()
+```
+
+```{python}
+regression = sps.linregress(merged['% Vaxed'], merged['Mean 2023'])
 ```
 
 ```{python}
@@ -357,7 +364,7 @@ The following plot demonstrates the residual error in terms of vertical distance
 ```{python}
 #A plot to demonstrate the acutal values, predicted values and residual error
 import residual_plot
-residual_plot.plot_with_errors(merged[0], merged['Mean 2023'], regression.intercept, regression.slope)
+residual_plot.plot_with_errors(merged['% Vaxed'], merged['Mean 2023'], regression.intercept, regression.slope)
 plt.xlabel('Percent Vaccinated as of 2023')
 plt.ylabel('Mean Excess Mortality 2023')
 plt.title('Depicting residual error')
@@ -367,7 +374,7 @@ We used a residual vs fitted value plot to check whether the relationship betwee
 
 ```{python}
 # Checking for linearity
-predicted = regression.intercept + regression.slope * merged[0]
+predicted = regression.intercept + regression.slope * merged['% Vaxed']
 residual = merged['Mean 2023'] - predicted
 plt.scatter(x=predicted, y=residual, color='blue')
 plt.title('Residuals vs. Fitted Values Plot')
@@ -385,7 +392,7 @@ We then checked whether the assumption made by linear regression that the residu
 
 ```{python}
 #Plotting a histogram of the residual errors
-predicted = regression.intercept + regression.slope * merged[0]
+predicted = regression.intercept + regression.slope * merged['% Vaxed']
 plt.hist(merged['Mean 2023'] - predicted)
 plt.xlabel('Residual error')
 plt.ylabel('Frequency')
@@ -472,7 +479,7 @@ import plot1
 
 ```{python}
 vaccine_dict = merge.merge_vaccines(by_type_and_country, just_means, vaccine_type)
-vaccine_dict
+#vaccine_dict
 ```
 
 ```{python}
@@ -480,16 +487,22 @@ plot1.plot_vax(vaccine_dict, '% vaxed', 'Mean 2023')
 ```
 
 ```{python}
-
+import regression_type
 ```
 
-- Kessia to add here a dataframe of vaccination type rows and slope, r-value and p-value columns
+```{python}
+table_regress_type = regression_type.linregress_table(vaccine_dict)
+table_regress_type.apply(lambda s: s.apply('{0:.5f}'.format))
+```
 
 ### Permutation test
 
 
-- Why are we choosing to use permutation test - fewer assumptions eg doesn't assume residuals are normally distributed. Research and add here other pros of a permutation test above linregress p-value
-- Less assumptions therefore improves the confidence in our results 
+The p-value and r-values from the linregress function assume linearity and independence of the given variables. Unfortunately, due to the highly interconnected value of mortality which can be affected by a variety of factors and the fact that the vaccination rate itself is affected by death rates it is un-wise to take those values at face value.
+
+Instead we chose to use the permutation test. A method that shuffles one column of variables between two different types of vaccines and then takes the slope for each new null word vaccine substracts them and compare the given difference to the real world slope difference. It does this thousands of times and tells you have far the real world data is from a null world hypothesis. Ie: in worlds where the relationship between vaccine rates and mortality rates is random how many times would you find the real world value.
+
+In our case between Astrazeneca and Pfizer their data is so unlikely that among a million trials their difference never shows up. This means that the model we’be made is extremely significant.
 
 ```{python}
 PFI = sps.linregress(vaccine_dict['Pfizer']['% vaxed'], vaccine_dict['Pfizer']['Mean 2023'])
@@ -531,6 +544,8 @@ def permute(Vax1_str, Vax2_str):
 permute('Pfizer', 'Astrazeneca')
 ```
 
+When running the above code the closer you get to 5000 the less significant the model is. The closer it is to 0 or 10000 the better the level of significance. Among our data the relationship between mortality rates and vaccine rates can be confirmed.
+
 ### Further interrogation of the results
 
 
@@ -545,6 +560,10 @@ permute('Pfizer', 'Astrazeneca')
 
 
 
+
+```{python}
+
+```
 
 ```{python}
 
