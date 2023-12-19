@@ -478,23 +478,18 @@ by_type_and_country['VaccineType'] = by_type_and_country['Vaccine'].replace(vacc
 ```{python}
 # Import .py file which performs linear regression for each type of vaccine by uptake against excess mortality in EU countries
 
-by_type_and_country[['VaccineType']]
+by_type_and_country[['VaccineType']].head()
 ```
 
 ```{python}
-by_type_and_country.head()
-```
-
-```{python}
+#
 import merge
-import plot1
 
+# 
 vaccine_type = by_type_and_country['VaccineType'].drop_duplicates()
-```
 
-```{python}
-vaccine_dict = merge.merge_vaccines(by_type_and_country, just_means, vaccine_type)
-#vaccine_dict
+#
+vaccine_dict = merge.merge_vaccines(by_type_and_country, country_and_mean, vaccine_type)
 ```
 
 ```{python}
@@ -508,11 +503,7 @@ table_regress_type.apply(lambda s: s.apply('{0:.5f}'.format))
 
 ```{python}
 #
-import merge
 import plot1
-
-#
-vaccine_dict = merge.merge_vaccines(by_type_and_country, country_and_mean, vaccine_type)
 
 #
 plot1.plot_vax(vaccine_dict, '% vaxed', 'Mean 2023')

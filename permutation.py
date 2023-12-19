@@ -54,4 +54,4 @@ def permute(Vax1_str, Vax2_str, dict):
         fake_diff = fakeVax1.slope - fakeVax2.slope
         fake_difference[i] = fake_diff
         diff_act = np.count_nonzero(fake_difference <= real_diff)
-    return plt.hist(fake_difference) and diff_act;
+    return plt.hist(fake_difference), plt.xlabel('Difference in permuted slopes'), plt.ylabel('Count'), plt.title('Slope difference permutation results between', Vax1_str, ' and ', Vax2_str)  and print('Number of times real difference in slopes occurs in permutation: ', diff_act;)
