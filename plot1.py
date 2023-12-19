@@ -4,10 +4,10 @@ import matplotlib.pyplot as plt
 
 def plot_vax(vaccine_dict, vax, mean):
     
-    
+    #create 3x6 row of empty subplots
     fig, axes = plt.subplots(nrows=3, ncols=6, figsize=(18, 9))
 
-    
+    #
     axes = axes.flatten()
 
    

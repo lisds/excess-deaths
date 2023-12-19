@@ -449,19 +449,18 @@ plt.show()
 
 So far, we have only investigated whether there seems to be a relationship between the percentage of vaccinated individuals and 2023 excess mortality across EU countries. We have only explored this in terms of vaccination *by any* Covid-19 vaccine. 
 
-Our vaccination data includes the weekly number of first doses by each vaccination type (for each country). Different vaccine manufacturures produce different kinds of vaccines. Pfizer-BioTech and Moderna are both mRNA vaccines, which are are supposedly linked to an increased number of cardiac incidents (Paknahad et.al, 2023). Both the Oxford Astrazeneca and Janssen (Johnson and Johnson) vaccines are viral vector vaccines. It is resonable to suggets that each vaccine type could have a different impact on the health of individuals, and therefore excess mortality. In addition, each manufacturer will have their own unique process of production. 
+Our vaccination data includes the weekly number of first doses by each vaccination type (for each country). Different vaccine manufacturers produce different kinds of vaccines. Pfizer-BioTech and Moderna are both mRNA vaccines, which are are supposedly linked to an increased number of cardiac incidents (Paknahad et.al, 2023). Both the Oxford Astrazeneca and Janssen (Johnson and Johnson) vaccines are viral vector vaccines. It is resonable to suggest that each vaccine type could have a different impact on the health of individuals, and therefore excess mortality.
 
-We first investigated the relationship between excess mortality and vaccine by manufacturer. Using the same mean excess mortality figure from our first regresssion, we conducted a linear regression for each maunfacturer.
+We  investigated the relationship between excess mortality and vaccine by manufacturer. We used the same mean excess mortality figure from our first regresssion.
+
+We first created a dataframe containing number of first doses administered up until 2023, grouped by both type and country simaltaneously. 
 
 ```{python}
 by_type_and_country = vaccine_data[(vaccine_data['Year'] != '2023') & (vaccine_data['TargetGroup'] == 'ALL')].groupby(['ReportingCountry','Vaccine'])['FirstDose'].sum()
 by_type_and_country = by_type_and_country.reset_index()
+by_type_and_country.head()
 ```
 
-
-```{python}
-population_wk1_23 = vaccine_data[vaccine_data['YearWeekISO'] == '2023-W01'].groupby('ReportingCountry')['Population'].first()
-```
 
 ```{python}
 by_type_and_country = pd.merge(by_type_and_country, population_wk1_23, on = 'ReportingCountry')
@@ -506,8 +505,15 @@ by_type_and_country.head()
 
 ```{python}
 vaccine_type = by_type_and_country['VaccineType'].drop_duplicates()
-vaccine_type
 ```
+
+```{python}
+import regression_type
+table_regress_type = regression_type.linregress_table(vaccine_dict)
+table_regress_type.apply(lambda s: s.apply('{0:.5f}'.format))
+```
+
+
 
 ```{python}
 import merge
@@ -516,21 +522,23 @@ import plot1
 
 ```{python}
 vaccine_dict = merge.merge_vaccines(by_type_and_country, just_means, vaccine_type)
-vaccine_dict
+#vaccine_dict
 ```
 
 ```{python}
 plot1.plot_vax(vaccine_dict, '% vaxed', 'Mean 2023')
 ```
 
-The only vaccine types 
+The only vaccine types with suffcient data to merit further inspection are the 4 most uptaken vaccines (Pfizer, Moderna, Astrazenica and Janssen) as you can see from the scale of the x axes on all of the plots.  
 
 ```{python}
-
+AZ_linregress = table_regress_type.loc['Astrazeneca']
+MOD_linregress = table_regress_type.loc['Moderna']
+PF_linregress = table_regress_type.loc['Pfizer']
+JAN_linregress = table_regress_type.loc['Janssen']
 ```
 
 ```{python}
-
 fig, axs = plt.subplots(2, 2, figsize=(10, 8))
 
 for x, y, country in zip(vaccine_dict['Astrazeneca']['% vaxed'],
@@ -538,7 +546,7 @@ for x, y, country in zip(vaccine_dict['Astrazeneca']['% vaxed'],
                          vaccine_dict['Astrazeneca']['ReportingCountry']):
     axs[0, 0].scatter(x, y)
     axs[0, 0].text(x, y, country, fontsize=8, ha='right', va='bottom')
-    axs[0, 0].set_title('AstraZeneca')
+    axs[0, 0].set_title(f"\n Astrazeneca \n$rvalue$ = {round(AZ_linregress['r-value'],4)} \n$pvalue$ = {round(AZ_linregress['p-value'],4)}")
 
 
 for x, y, country in zip(vaccine_dict['Moderna']['% vaxed'],
@@ -546,7 +554,7 @@ for x, y, country in zip(vaccine_dict['Moderna']['% vaxed'],
                          vaccine_dict['Moderna']['ReportingCountry']):
     axs[0, 1].scatter(x, y)
     axs[0, 1].text(x, y, country, fontsize=8, ha='right', va='bottom')  
-    axs[0, 1].set_title('Moderna')
+    axs[0, 1].set_title(f"\n Moderna \n$rvalue$ = {round(MOD_linregress['r-value'],4)} \n$pvalue$ = {round(MOD_linregress['p-value'],4)}")
 
 
 for x, y, country in zip(vaccine_dict['Pfizer']['% vaxed'],
@@ -554,7 +562,7 @@ for x, y, country in zip(vaccine_dict['Pfizer']['% vaxed'],
                          vaccine_dict['Pfizer']['ReportingCountry']):
     axs[1, 0].scatter(x, y)
     axs[1, 0].text(x, y, country, fontsize=8, ha='right', va='bottom')  # Adjust fontsize and position as needed
-    axs[1, 0].set_title('Pfizer')
+    axs[1, 0].set_title(f"\n Pfizer \n$rvalue$ = {round(PF_linregress['r-value'],4)} \n$pvalue$ = {round(PF_linregress['p-value'],4)}")
 
 
 for x, y, country in zip(vaccine_dict['Janssen']['% vaxed'],
@@ -562,7 +570,7 @@ for x, y, country in zip(vaccine_dict['Janssen']['% vaxed'],
                          vaccine_dict['Janssen']['ReportingCountry']):
     axs[1, 1].scatter(x, y)
     axs[1, 1].text(x, y, country, fontsize=8, ha='right', va='bottom')  # Adjust fontsize and position as needed
-    axs[1, 1].set_title('Janssen')
+    axs[1, 1].set_title(f"\n Janssen \n$rvalue$ = {round(JAN_linregress['r-value'],4)} \n$pvalue$ = {round(JAN_linregress['p-value'],4)}")
 
 for ax in axs.flat:
     ax.set(xlabel='Percentage Vaccinated', ylabel='Mean Excess Death 2023')
@@ -574,15 +582,27 @@ plt.tight_layout()
 plt.show()
 ```
 
+The proportion of the population vaccinated with both Astrazeneca and Pfizer vaccines at the end of 2022, appears to have medium positive correlation with excess death in 2023. They have r values of 0.5663 and 0.583 respectively. The low p values of these plots show that they are statistically surprising and are worth looking into in more detail.  
+
+The Janssen plot has a p-value of 0.33 and therefore we cannot make any conclusions as to the nature of the relationship between Janssen vaccination uptake and excess mortality in 2023. 
+
+The moderna plot inlcudes an outlier in Lichenstein. We decided to remove this anomalous result.   
+
 ```{python}
-import regression_type
+no_LI = vaccine_dict['Moderna'][vaccine_dict['Moderna']['ReportingCountry'] != 'LI']
+no_LI_regression = sps.linregress(no_LI['% vaxed'], no_LI['Mean 2023'])
+
+no_LI = vaccine_dict['Moderna'][vaccine_dict['Moderna']['ReportingCountry'] != 'LI']
+plt.scatter(no_LI['% vaxed'], no_LI['Mean 2023'])
+for i in range(len(no_LI)):
+    plt.text(no_LI['% vaxed'].iloc[i], no_LI['Mean 2023'].iloc[i], no_LI['ReportingCountry'].iloc[i])
+plt.xlabel('% vaxed')
+plt.ylabel('Excess mortality 2023')
+plt.title(f"\n Moderna plot without Lichenstein\n$rvalue$ = {round(no_LI_regression.rvalue,4)} \n$pvalue$ = {round(no_LI_regression.pvalue,4)}")
+
 ```
 
-
-```{python}
-table_regress_type = regression_type.linregress_table(vaccine_dict)
-table_regress_type.apply(lambda s: s.apply('{0:.5f}'.format))
-```
+Even after removing this outlier the p-value still remains at 0.2826. Again no conclusion can be made as to the nature of the moderna vaccine and excess mortality in 2023.
 
 ### Permutation test
 
