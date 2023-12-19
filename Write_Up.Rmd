@@ -449,9 +449,9 @@ plt.show()
 
 So far, we have only investigated whether there seems to be a relationship between the percentage of vaccinated individuals and 2023 excess mortality across EU countries. We have only explored this in terms of vaccination *by any* Covid-19 vaccine. 
 
-However, our vaccination data includes the monthly number of first doses by each vaccination type (for each country). Furthermore, WRITE HERE THAT IT IS WELL KNOWN THAT THERE ARE DIFFERENT TECHNOLOGIES WHICH EACH VACCINE TYPE USES - and therefore it is likely that each vaccine type could have a different impact on the health of individuals, and therefore excess mortality.
+Our vaccination data includes the weekly number of first doses by each vaccination type (for each country). Different vaccine manufacturures produce different kinds of vaccines. Pfizer-BioTech and Moderna are both mRNA vaccines, which are are supposedly linked to an increased number of cardiac incidents (Paknahad et.al, 2023). Both the Oxford Astrazeneca and Janssen (Johnson and Johnson) vaccines are viral vector vaccines. It is resonable to suggets that each vaccine type could have a different impact on the health of individuals, and therefore excess mortality. In addition, each manufacturer will have their own unique process of production. 
 
-Therefore, we decided to plot a linear regression of percentage vaccinated against excess mortality for each Covid-19 vaccination type. 
+We first investigated the relationship between excess mortality and vaccine by manufacturer. Using the same mean excess mortality figure from our first regresssion, we conducted a linear regression for each maunfacturer.
 
 ```{python}
 by_type_and_country = vaccine_data[(vaccine_data['Year'] != '2023') & (vaccine_data['TargetGroup'] == 'ALL')].groupby(['ReportingCountry','Vaccine'])['FirstDose'].sum()
@@ -501,6 +501,10 @@ by_type_and_country[['VaccineType']]
 ```
 
 ```{python}
+by_type_and_country.head()
+```
+
+```{python}
 vaccine_type = by_type_and_country['VaccineType'].drop_duplicates()
 vaccine_type
 ```
@@ -512,11 +516,62 @@ import plot1
 
 ```{python}
 vaccine_dict = merge.merge_vaccines(by_type_and_country, just_means, vaccine_type)
-#vaccine_dict
+vaccine_dict
 ```
 
 ```{python}
 plot1.plot_vax(vaccine_dict, '% vaxed', 'Mean 2023')
+```
+
+The only vaccine types 
+
+```{python}
+
+```
+
+```{python}
+
+fig, axs = plt.subplots(2, 2, figsize=(10, 8))
+
+for x, y, country in zip(vaccine_dict['Astrazeneca']['% vaxed'],
+                         vaccine_dict['Astrazeneca']['Mean 2023'],
+                         vaccine_dict['Astrazeneca']['ReportingCountry']):
+    axs[0, 0].scatter(x, y)
+    axs[0, 0].text(x, y, country, fontsize=8, ha='right', va='bottom')
+    axs[0, 0].set_title('AstraZeneca')
+
+
+for x, y, country in zip(vaccine_dict['Moderna']['% vaxed'],
+                         vaccine_dict['Moderna']['Mean 2023'],
+                         vaccine_dict['Moderna']['ReportingCountry']):
+    axs[0, 1].scatter(x, y)
+    axs[0, 1].text(x, y, country, fontsize=8, ha='right', va='bottom')  
+    axs[0, 1].set_title('Moderna')
+
+
+for x, y, country in zip(vaccine_dict['Pfizer']['% vaxed'],
+                         vaccine_dict['Pfizer']['Mean 2023'],
+                         vaccine_dict['Pfizer']['ReportingCountry']):
+    axs[1, 0].scatter(x, y)
+    axs[1, 0].text(x, y, country, fontsize=8, ha='right', va='bottom')  # Adjust fontsize and position as needed
+    axs[1, 0].set_title('Pfizer')
+
+
+for x, y, country in zip(vaccine_dict['Janssen']['% vaxed'],
+                         vaccine_dict['Janssen']['Mean 2023'],
+                         vaccine_dict['Janssen']['ReportingCountry']):
+    axs[1, 1].scatter(x, y)
+    axs[1, 1].text(x, y, country, fontsize=8, ha='right', va='bottom')  # Adjust fontsize and position as needed
+    axs[1, 1].set_title('Janssen')
+
+for ax in axs.flat:
+    ax.set(xlabel='Percentage Vaccinated', ylabel='Mean Excess Death 2023')
+
+
+plt.tight_layout()
+
+
+plt.show()
 ```
 
 ```{python}
