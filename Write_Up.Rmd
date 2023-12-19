@@ -7,7 +7,7 @@ jupyter:
       extension: .Rmd
       format_name: rmarkdown
       format_version: '1.2'
-      jupytext_version: 1.16.0
+      jupytext_version: 1.15.2
   kernelspec:
     display_name: Python 3 (ipykernel)
     language: python
@@ -387,7 +387,7 @@ plt.axhline(y=0, color='red', linestyle='--', linewidth=1)
 plt.show()
 ```
 
- Ideally, the residuals should be randomly scattered around zero, and there should be no discernible pattern. As there doesn't appear to be a discernable pattern in how the residuals are distributed from left to right, and they look randomly scattered around zero, we can be relatively confident of a linear relationship between the percentage of vaccinated individuals in a country and mean 2023 excess mortality.
+Ideally, the residuals should be scattered with no discernible pattern. As there doesn't appear to be a pattern in how the residuals are distributed from left to right, we can be relatively confident of a linear relationship between the percentage of vaccinated individuals in a country and mean 2023 excess mortality.
 
 
 We then checked whether the assumption made by linear regression that the residual errors follow a normal distribution was correct, using a histogram plot. 
@@ -395,16 +395,47 @@ We then checked whether the assumption made by linear regression that the residu
 ```{python}
 #Plotting a histogram of the residual errors
 predicted = regression.intercept + regression.slope * merged['% Vaxed']
-plt.hist(merged['Mean 2023'] - predicted)
+plt.hist(residual)
 plt.xlabel('Residual error')
 plt.ylabel('Frequency')
 plt.title('Plotting the distribution of the residual errors')
 ```
 
-This histogram doesn't help us very much, as it doesn't look bell-shaped but also doesn't give us a very good idea of what the distribution is.
+This histogram doesn't help us very much, as it doesn't look very bell-shaped but also doesn't give us a very good idea of what the distribution is. To further investigate the normality of the residuals, we plotted a Q-Q plot of the residuals.
+
+```{python}
+import statsmodels.api as sm
+sm.qqplot(residual, line='s')
+plt.title('Q-Q residual plot')
+plt.show()
+```
+
+Since, the majority of the residuals seem to fall along the straight line, with no significant systemic deviation we can infer that the residuals are approximately normally distributed.
 
 
-- EXPAND ON THIS FURTHER - maybe speak to matthew
+Finally, to check how the residuals vary with changes in the chosen regressor, we plotted a residual vs regressor plot for each regressor.
+
+```{python}
+import matplotlib.pyplot as plt
+
+plt.scatter(merged['% Vaxed'], residual)
+plt.axhline(y=0, color='red', linestyle='--', linewidth=1)  # Reference line
+plt.xlabel('Regressor Values')
+plt.ylabel('Residuals')
+plt.title('Residual vs. Regressor Plot (for vaccination regressor)')
+plt.show()
+```
+
+```{python}
+import matplotlib.pyplot as plt
+
+plt.scatter(merged['Mean 2023'] , residual)
+plt.axhline(y=0, color='red', linestyle='--', linewidth=1)  # Reference line
+plt.xlabel('Regressor Values')
+plt.ylabel('Residuals')
+plt.title('Residual vs. Regressor Plot (for mortality regressor)')
+plt.show()
+```
 
 ##### Assumptions/limitations
 
