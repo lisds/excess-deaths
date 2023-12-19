@@ -29,10 +29,8 @@ jupyter:
 - rename variables clearly
 - comments on lines of code
 - justify use of our specific datasets - are there other datasets looking at same thing
-
-```{python}
-#test change to pull 
-```
+- TESTS
+- look though py files to see if we are using all the fuctions
 
 ```{python}
 #Importing necessary libraries 
@@ -387,7 +385,7 @@ plt.axhline(y=0, color='red', linestyle='--', linewidth=1)
 plt.show()
 ```
 
-Ideally, the residuals should be scattered with no discernible pattern. As there doesn't appear to be a pattern in how the residuals are distributed from left to right, we can be relatively confident of a linear relationship between the percentage of vaccinated individuals in a country and mean 2023 excess mortality.
+Ideally, the residuals should be scattered with no discernible pattern. As there doesn't appear to be an obvious pattern in how the residuals are distributed from left to right, we can be relatively confident of a linear relationship between the percentage of vaccinated individuals in a country and mean 2023 excess mortality.
 
 
 We then checked whether the assumption made by linear regression that the residual errors follow a normal distribution was correct, using a histogram plot. 
@@ -436,6 +434,8 @@ plt.ylabel('Residuals')
 plt.title('Residual vs. Regressor Plot (for mortality regressor)')
 plt.show()
 ```
+
+The second of these regression plots looks slightly abnormal in that there seems to be a pattern in the distribution of the residuals. Due to time contraints, we will be sticking to linear regression however further research into whether non-linear models could be more appropriate to model the relationship is recommended.
 
 ##### Assumptions/limitations
 
@@ -524,10 +524,6 @@ plot1.plot_vax(vaccine_dict, '% vaxed', 'Mean 2023')
 ```
 
 The only vaccine types 
-
-```{python}
-
-```
 
 ```{python}
 
@@ -696,7 +692,28 @@ plt.show()
 ```
 
 ```{python}
+mortality_by_age = pd.read_csv('data/excess-mortality-p-scores-projected-baseline-by-age.csv')
+mortality_by_age
+```
 
+```{python}
+just_eu = mortality_by_age[mortality_by_age['Entity'].isin(country_code_dict)]
+just_eu
+```
+
+```{python}
+just_eu['Year'] = just_eu['Day'].str[6:]
+just_eu
+```
+
+```{python}
+just_eu_2023 = just_eu[just_eu['Year'] == '2023']
+just_eu_2023
+```
+
+```{python}
+mean_2023_mortality = just_eu_2023.groupby('Entity').agg({'p_proj_0_14':'mean', 'p_proj_15_64': 'mean', 'p_proj_65_74':'mean', 'p_proj_75_84':'mean', 'p_proj_85p':'mean','p_proj_all_ages':'mean'})
+pd.DataFrame(mean_2023_mortality.sort_values(by = 'p_proj_all_ages', ascending = False))
 ```
 
 ### Conclusion
@@ -707,15 +724,3 @@ plt.show()
 
 
 
-
-```{python}
-
-```
-
-```{python}
-
-```
-
-```{python}
-
-```
