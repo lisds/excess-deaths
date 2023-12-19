@@ -521,6 +521,7 @@ plot1.plot_vax(vaccine_dict, '% vaxed', 'Mean 2023')
 The only vaccine types with suffcient data to merit further inspection are the 4 most uptaken vaccines (Pfizer, Moderna, Astrazenica and Janssen) as you can see from the scale of the x axes on all of the plots.  
 
 ```{python}
+
 AZ_linregress = table_regress_type.loc['Astrazeneca']
 MOD_linregress = table_regress_type.loc['Moderna']
 PF_linregress = table_regress_type.loc['Pfizer']
