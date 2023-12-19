@@ -7,7 +7,7 @@ jupyter:
       extension: .Rmd
       format_name: rmarkdown
       format_version: '1.2'
-      jupytext_version: 1.15.2
+      jupytext_version: 1.16.0
   kernelspec:
     display_name: Python 3 (ipykernel)
     language: python
@@ -488,8 +488,8 @@ plot1.plot_vax(vaccine_dict, '% vaxed', 'Mean 2023')
 
 ```{python}
 import regression_type
-#works for me
 ```
+
 
 ```{python}
 table_regress_type = regression_type.linregress_table(vaccine_dict)
