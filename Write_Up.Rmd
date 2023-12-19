@@ -157,7 +157,7 @@ country_code_dict = {
     'Portugal': 'PT', 
     'Romania': 'RO',
     'Slovenia': 'SI', 
-    'Slovakia': 'Sk', 
+    'Slovakia': 'SK', 
     'Finland': 'FI', 
     'Sweden': 'SE', 
     'Iceland': 'IS',
@@ -292,7 +292,7 @@ excess_mortality.sort_values('Mean 2023').head()
 
 ```{python}
 
-plt.bar(x=excess_mortality.index, height=excess_mortality['Mean 2023'])
+plt.bar(x=excess_mortality.sort_values('Mean 2023').index, height=excess_mortality.sort_values('Mean 2023')['Mean 2023'])
 plt.xticks(rotation=90)
 ```
 
@@ -560,6 +560,59 @@ Age, flu, health service strain
 
 __Explore Commonalities__ between similar groupings of countries. Which countries bought certain vaccines - are there any commonalities. 
 
+- Which countries had most of each vaccine 
+- Did countries which got pfizer also get astrazenica? 
+- What was the spatial trend in vaccine type uptake?
+
+```{python}
+# Calculate the unvaccinated proportion
+by_type_and_country['Unvaccinated'] = 1 - by_type_and_country.groupby('ReportingCountry')['% vaxed'].transform('sum')
+
+# Prepare pie chart data
+pie_chart_data = by_type_and_country.pivot_table(index='ReportingCountry', columns='VaccineType', values='% vaxed', fill_value=0)
+pie_chart_data['Unvaccinated'] = by_type_and_country.groupby('ReportingCountry')['Unvaccinated'].first()
+
+# Create an array to order countries by their observed mean excess mortality 2023
+order_array = excess_mortality.sort_values('Mean 2023')['ReportingCountry'].values
+
+# Filter array for only values in pie_chart_data
+filtered_array = [value for value in order_array if value in pie_chart_data.index]
+
+# Order pie chart data by excess mortality observed 2023 low > high
+ordered_pie_chart_data = pie_chart_data.reindex(filtered_array)
+
+```
+
+```{python}
+
+# Function to prevent overcrowding of percentage labels 
+def custom_autopct(pct):
+   return '{:.1f}%'.format(pct) if pct > 0.1 else ''
+
+# Create subplots
+fig, axes = plt.subplots(10, 3, figsize=(15, 50))  
+# Flatten the axes array to allow for iteration
+axes = axes.flatten()  
+
+# Plot each pie chart
+for i, country in enumerate(ordered_pie_chart_data.index):
+    country_data = ordered_pie_chart_data.loc[country]
+    # Creating custom labels
+    labels = [label if value > 0.001 else '' for label, value in country_data.items()]
+    axes[i].pie(country_data, labels=labels, autopct=lambda pct: custom_autopct(pct))
+    axes[i].set_title(f'Vaccination Distribution in {country}')
+    axes[i].axis('equal')
+
+
+# Adjust layout
+plt.tight_layout()
+plt.show()
+```
+
+```{python}
+
+```
+
 ### Conclusion
 
 - Areas for future research 
@@ -568,6 +621,10 @@ __Explore Commonalities__ between similar groupings of countries. Which countrie
 
 
 
+
+```{python}
+
+```
 
 ```{python}
 
