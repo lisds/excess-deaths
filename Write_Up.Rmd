@@ -642,7 +642,7 @@ pie_chart_data['Unvaccinated'] = by_type_and_country.groupby('ReportingCountry')
 order_array = excess_mortality.sort_values('Mean 2023')['ReportingCountry'].values
 
 # Filter array for only values in pie_chart_data
-filtered_array = [value for value in order_array if value in pie_chart_data.index]
+filtered_array = order_array[pd.Series(order_array).isin(pie_chart_data.index)].tolist()
 
 # Order pie chart data by excess mortality observed 2023 low > high
 ordered_pie_chart_data = pie_chart_data.reindex(filtered_array)
