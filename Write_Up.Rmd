@@ -21,16 +21,9 @@ jupyter:
 
 # Is there a link between certain Covid-19 vaccines and 2023 excess all-cause mortality in the EU?
 
- To remember:
 
-- Rename excess_death.xlsx to excess_mortality.xlsx
-- ONLY homemade functions in .py files
-- Check we are using excess death and excess mortality correctly throughout
-- rename variables clearly
-- comments on lines of code
-- justify use of our specific datasets - are there other datasets looking at same thing
-- TESTS
-- look though py files to see if we are using all the fuctions
+
+
 
 ```{python}
 #Importing necessary libraries 
@@ -38,6 +31,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt 
 import scipy.stats as sps
+import statsmodels.api as sm
 
 # Safe setting for Pandas.  Needs Pandas version >= 1.5.
 pd.set_option('mode.copy_on_write', True)
@@ -211,12 +205,11 @@ Given there were duplicate counts due to the 'Region' column and duplicated rows
 Some of the vaccines are adaptations of the general vaccine e.g. COM refers to the Pfizer BioNTech - Comirnaty whilst COMBA.4-5 refers to a variant of the COM vaccine targetting Original/Omicron BA.4/BA.5. Due to a large variety of countries in our dataset and each country having a varying approach to collecting data we end up with these sub-categories of vaccine variations such as COMBIV who's numbers are negligeable compared to the full Pfizer category "COM". We aknowledge this fact but we shall keep those subcategories in the vaccines list in case we find something unusual within the vaccine subcategories when regressed against excess mortality.
 
 ```{python}
+# Display total number of first doses administered for each vaccine type
 vaccine_data.groupby('Vaccine')['FirstDose'].sum()
 ```
 
-## Analysis
-
-### Descriptive statistics
+### Clean DataFrames
 
 
 After cleaning our data, we have obtained the following dataframe for excess mortality:
@@ -229,14 +222,8 @@ Each row of the dataframe corresponds to a reporting country, and the values wit
 
 The following dataframe summarise the excess mortality data:
 
-```{python}
-# Creating a dataframe to describe the data
-excess_mortality.describe()
-```
 
-This description shows us that around the fiftieth percentile most countries have a positive excess mortality and most means are positive as well. This is a glimpse into the underlying problem.
-
-And the following dataframe is for Covid-19 vaccination:
+And the following dataframe for Covid-19 vaccinations:
 
 ```{python}
 vaccine_data.head()
@@ -263,6 +250,13 @@ vaccine_data.groupby('Year')['FirstDose'].sum()
 ```
 
 ```{python}
+# Creating a dataframe to describe the data
+excess_mortality.describe()
+```
+
+This description shows us that around the fiftieth percentile most countries have a positive excess mortality and most means are positive as well. This is a glimpse into the underlying problem.
+
+```{python}
 # Select only months for 2023
 months_2023 = ['2023-01', '2023-02', '2023-03', '2023-04', '2023-05', '2023-06', '2023-07', '2023-08', '2023-09']
 
@@ -272,6 +266,9 @@ excess_mortality['Mean 2023'] = excess_mortality[months_2023].apply(pd.to_numeri
 # Plot histogram of excess all cause mortality for 2023
 plt.bar(x=excess_mortality.sort_values('Mean 2023').index, height=excess_mortality.sort_values('Mean 2023')['Mean 2023'])
 plt.xticks(rotation=90)
+plt.xlabel('Country')
+plt.ylabel('Mean Excess Mortality 2023')
+plt.title('Mean Excess Mortality 2023 by EU country')
 plt.show
 ```
 
@@ -283,7 +280,9 @@ In order to account for varying population sizes, we used the percentage of vacc
 The first dose column contains the number of first dose vaccines administered to individuals during the reporting week. We summed all of these values up until 2023, to get a total number of people in each country who had received a first dose of any type of vaccine. By selecting first dose only, we made a binary categorisation: vaccinated or not.
 
 ```{python}
+# Get series with count for total first dose vaccinations for each country up to start of 2023
 total_vaxed_up_to_23 = vaccine_data[vaccine_data['Year'] != '2023'][vaccine_data['TargetGroup'] == 'ALL'].groupby('ReportingCountry')['FirstDose'].sum()
+
 ```
 
 We then needed to find the population of each country to convert this to a percentage. We took the population of each country to be the population as of week 1 in 2023. 
@@ -294,29 +293,30 @@ population_wk1_23 = vaccine_data[vaccine_data['YearWeekISO'] == '2023-W01'].grou
 
 #Converting the number of people vaccinated into a proportion of the population
 percent_vaxed_wk1_23= total_vaxed_up_to_23/population_wk1_23 * 100
-percent_vaxed_wk1_23
 ```
 
 To run the regression we selected the mean 2023 and reporting country column from the excess mortality dataframe. We merged this with the 'percentage vaccinated' column to create a dataframe with the percentage vaccinated and the mean excess mortality in 2023 for each country. When doing this we were unable to preserve data for both the total EU and Switzerland as these were not available categories in the vaccine dataset. 
 
 ```{python}
-just_code_and_mean = excess_mortality[['ReportingCountry', 'Mean 2023']]
-merged = pd.merge(just_code_and_mean, pd.DataFrame(percent_vaxed_wk1_23), on = 'ReportingCountry').rename(columns ={0: '% Vaxed'})
+# New dataframe with only ReportingCountry and Mean 2023 from excess mortality 
+country_and_mean = excess_mortality[['ReportingCountry', 'Mean 2023']]
+# Merge percentaged vaccinated into new merged dataframe
+merged = pd.merge(country_and_mean, pd.DataFrame(percent_vaxed_wk1_23), on = 'ReportingCountry').rename(columns ={0: '% Vaxed'})
 merged.head()
 ```
 
 ```{python}
+# Perform OLS regression
 regression = sps.linregress(merged['% Vaxed'], merged['Mean 2023'])
-```
 
-```{python}
-import matplotlib.pyplot as plt
-
+# Create scatter plot
 plt.scatter(merged['% Vaxed'],merged['Mean 2023'])
 
+# Add country code data point labels
 for i in range(len(merged)):
     plt.text(merged['% Vaxed'][i] + 1, merged['Mean 2023'][i], merged['ReportingCountry'][i], fontsize=8)
- 
+
+# Plot labels and title and add line of best fit
 plt.xlabel('Percent Vaccinated as of 2023')
 plt.ylabel('Mean Excess Mortality 2023')
 plt.title(f"\n Vaccination uptake versus mean excess mortality\n$rvalue$ = {round(regression.rvalue,4)} \n$pvalue$ = {round(regression.pvalue,4)}")
@@ -339,12 +339,12 @@ In order to verify whether linear regression is an appropriate technique to inve
 The following plot demonstrates the residual error in terms of vertical distance between each data point and each fitted value.
 
 ```{python}
-#A plot to demonstrate the acutal values, predicted values and residual error
+#A plot to demonstrate the actual values, predicted values and residual error
 import residual_plot
 residual_plot.plot_with_errors(merged['% Vaxed'], merged['Mean 2023'], regression.intercept, regression.slope)
 plt.xlabel('Percent Vaccinated as of 2023')
 plt.ylabel('Mean Excess Mortality 2023')
-plt.title('Depicting residual error')
+plt.title('Residual Error Plot')
 ```
 
 We used a residual vs fitted value plot to check whether the relationship between a country' percentage of vaccinated individals and its excess mortality, is adequately captured by a linear model.
@@ -373,13 +373,13 @@ predicted = regression.intercept + regression.slope * merged['% Vaxed']
 plt.hist(residual)
 plt.xlabel('Residual error')
 plt.ylabel('Frequency')
-plt.title('Plotting the distribution of the residual errors')
+plt.title('Distribution of the residual errors')
 ```
 
 This histogram doesn't help us very much, as it doesn't look very bell-shaped but also doesn't give us a very good idea of what the distribution is. To further investigate the normality of the residuals, we plotted a Q-Q plot of the residuals.
 
 ```{python}
-import statsmodels.api as sm
+# Creating quartile-quartile plot
 sm.qqplot(residual, line='s')
 plt.title('Q-Q residual plot')
 plt.show()
@@ -391,24 +391,22 @@ Since, the majority of the residuals seem to fall along the straight line, with 
 Finally, to check how the residuals vary with changes in the chosen regressor, we plotted a residual vs regressor plot for each regressor.
 
 ```{python}
-import matplotlib.pyplot as plt
-
+# Create Residuals vs Vaccination regressor values plot
 plt.scatter(merged['% Vaxed'], residual)
 plt.axhline(y=0, color='red', linestyle='--', linewidth=1)  # Reference line
 plt.xlabel('Regressor Values')
 plt.ylabel('Residuals')
-plt.title('Residual vs. Regressor Plot (for vaccination regressor)')
+plt.title('Residuals vs. Regressor Values Plot (for vaccination regressor)')
 plt.show()
 ```
 
 ```{python}
-import matplotlib.pyplot as plt
-
+# Create Residuals vs Mortality regressor values plot
 plt.scatter(merged['Mean 2023'] , residual)
 plt.axhline(y=0, color='red', linestyle='--', linewidth=1)  # Reference line
 plt.xlabel('Regressor Values')
 plt.ylabel('Residuals')
-plt.title('Residual vs. Regressor Plot (for mortality regressor)')
+plt.title('Residuals vs. Regressor Values Plot (for mortality regressor)')
 plt.show()
 ```
 
@@ -421,7 +419,7 @@ The second of these regression plots looks slightly abnormal in that there seems
 - Just focusing on first doses
 - We know it is correlated but the question is whether vaccination rate impacted excess mortality - look into confounding variables 
 
-##### Regression of mean excess mortality against vaccination percentage for EU countries by vaccination 
+## Regression of mean excess mortality against vaccination percentage for EU countries by vaccination type
 
 
 So far, we have only investigated whether there seems to be a relationship between the percentage of vaccinated individuals and 2023 excess mortality across EU countries. We have only explored this in terms of vaccination *by any* Covid-19 vaccine. 
@@ -433,6 +431,7 @@ We  investigated the relationship between excess mortality and vaccine by manufa
 We first created a dataframe containing number of first doses administered up until 2023, grouped by both type and country simaltaneously. 
 
 ```{python}
+# First doses administered count by vaccine type and country
 by_type_and_country = vaccine_data[(vaccine_data['Year'] != '2023') & (vaccine_data['TargetGroup'] == 'ALL')].groupby(['ReportingCountry','Vaccine'])['FirstDose'].sum()
 by_type_and_country = by_type_and_country.reset_index()
 by_type_and_country.head()
@@ -440,18 +439,17 @@ by_type_and_country.head()
 
 
 ```{python}
+# Add country population column
 by_type_and_country = pd.merge(by_type_and_country, population_wk1_23, on = 'ReportingCountry')
 ```
 
 ```{python}
+# Add columnn denoting percentage of population vaccinated by specific vaccination types 
 by_type_and_country['% vaxed'] = by_type_and_country['FirstDose'] / by_type_and_country['Population']
 ```
 
 ```{python}
-just_means = excess_mortality[['Mean 2023', 'ReportingCountry']]
-```
-
-```{python}
+# Dictionary to rename vaccines with their full names
 vaccine_rename = {
     'AZ' : 'Astrazeneca',
     'COM' : 'Pfizer',
@@ -472,7 +470,14 @@ vaccine_rename = {
     'BHACOV' : 'BharatCovaxin',
     'SIN' : 'SinoVac'
 }
+# Add column with full vaccine name 
 by_type_and_country['VaccineType'] = by_type_and_country['Vaccine'].replace(vaccine_rename)
+
+```
+
+```{python}
+# Import .py file which performs linear regression for each type of vaccine by uptake against excess mortality in EU countries
+
 by_type_and_country[['VaccineType']]
 ```
 
@@ -493,6 +498,7 @@ vaccine_dict = merge.merge_vaccines(by_type_and_country, just_means, vaccine_typ
 ```
 
 ```{python}
+
 import regression_type
 table_regress_type = regression_type.linregress_table(vaccine_dict)
 table_regress_type.apply(lambda s: s.apply('{0:.5f}'.format))
@@ -501,16 +507,14 @@ table_regress_type.apply(lambda s: s.apply('{0:.5f}'.format))
 
 
 ```{python}
+#
 import merge
 import plot1
-```
 
-```{python}
-vaccine_dict = merge.merge_vaccines(by_type_and_country, just_means, vaccine_type)
-#vaccine_dict
-```
+#
+vaccine_dict = merge.merge_vaccines(by_type_and_country, country_and_mean, vaccine_type)
 
-```{python}
+#
 plot1.plot_vax(vaccine_dict, '% vaxed', 'Mean 2023')
 ```
 
@@ -518,8 +522,6 @@ The only vaccine types with suffcient data to merit further inspection are the 4
 
 ```{python}
 
-
-=======
 AZ_linregress = table_regress_type.loc['Astrazeneca']
 MOD_linregress = table_regress_type.loc['Moderna']
 PF_linregress = table_regress_type.loc['Pfizer']
@@ -562,7 +564,8 @@ for x, y, country in zip(vaccine_dict['Janssen']['% vaxed'],
     axs[1, 1].set_title(f"\n Janssen \n$rvalue$ = {round(JAN_linregress['r-value'],4)} \n$pvalue$ = {round(JAN_linregress['p-value'],4)}")
 
 for ax in axs.flat:
-    ax.set(xlabel='Percentage Vaccinated', ylabel='Mean Excess Mortality 2023')
+
+    ax.set(xlabel='Percentage vaccinated as of 2023', ylabel='Mean Excess Mortality 2023')
 
 
 plt.tight_layout()
@@ -585,7 +588,7 @@ no_LI = vaccine_dict['Moderna'][vaccine_dict['Moderna']['ReportingCountry'] != '
 plt.scatter(no_LI['% vaxed'], no_LI['Mean 2023'])
 for i in range(len(no_LI)):
     plt.text(no_LI['% vaxed'].iloc[i], no_LI['Mean 2023'].iloc[i], no_LI['ReportingCountry'].iloc[i])
-plt.xlabel('% vaxed')
+plt.xlabel('Percentage vaccinated as of 2023')
 plt.ylabel('Excess mortality 2023')
 plt.title(f"\n Moderna plot without Lichenstein\n$rvalue$ = {round(no_LI_regression.rvalue,4)} \n$pvalue$ = {round(no_LI_regression.pvalue,4)}")
 
@@ -614,6 +617,7 @@ permutation.permute('Pfizer', 'Astrazeneca', vaccine_dict)
 ```
 
 ```{python}
+
 
 ```
 
