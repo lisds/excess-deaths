@@ -57,7 +57,7 @@ The inclusion of 30 European countries in our study provides a rich dataset that
 <!-- #region -->
 ## Literature review
 
-Excess mortality following the COVID-19 pandemic has raised concerns globally. Various countries have reported significant deviations from expected mortality rates. Notably, the United States witnessed a substantial 5-12% weekly increase in all-cause excess mortality during the latter half of 2022 (CDC, 2023). Similarly, the United Kingdom experienced six consecutive quarters of excess mortality as of September 2023 (O'Dowd, 2023), and Australia recorded a 7% excess death rate in the first five months of 2023, although they attributed half of these deaths to COVID-19 (Adair, 2023). 
+Excess mortality following the COVID-19 pandemic has raised concerns globally. Various countries have reported significant deviations from expected mortality rates. Notably, the United States witnessed a substantial 5-12% weekly increase in all-cause excess mortality during the latter half of 2022 (CDC, 2023). Similarly, the United Kingdom experienced six consecutive quarters of excess mortality as of September 2023 (O'Dowd, 2023), and Australia recorded a 7% excess mortality in the first five months of 2023, although they attributed half of these deaths to COVID-19 (Adair, 2023). 
 
 The underlying causes of post-pandemic excess mortality remain a subject of debate and investigation. In a UK parliamentary debate on October 20, 2023, former Tory MP Andrew Bridgen stated that COVID-19 vaccines were rushed through trials and therefore might be contributing to the observed increase in excess mortality. Bridgen criticised the Office for National Statistics (ONS) and the Medicine and Healthcare Products Regulatory Agency (MHRA) for mishandling data to promote a pro-vaccine agenda.
 
@@ -68,7 +68,7 @@ Vaccine safety concerns were initiated during the Covid-19 pandemic with the sus
 
 Contrarily, other factors have been suggested as contributors to the recent spike in excess deaths. These include increased incidences of flu, an aging European population, the lasting effects of Covid-19 (long Covid), and strained healthcare services leading to delayed treatments and diagnoses (McDonald, 2022).
 
-To develop the discourse on this debate it is necessary to explore an association between the uptake of individual vaccines and excess mortality. Given the varied excess death rates across Europe and the utilisation of different vaccine types, the European Union offers a rich dataset for exploring potential links between different COVID-19 vaccines and mortality rates. 
+To develop the discourse on this debate it is necessary to explore an association between the uptake of individual vaccines and excess mortality. Given the varied excess mortality across Europe and the utilisation of different vaccine types, the European Union offers a rich dataset for exploring potential links between different COVID-19 vaccines and mortality rates. 
 
 <!-- #endregion -->
 
@@ -295,7 +295,7 @@ population_wk1_23 = vaccine_data[vaccine_data['YearWeekISO'] == '2023-W01'].grou
 percent_vaxed_wk1_23= total_vaxed_up_to_23/population_wk1_23 * 100
 ```
 
-To run the regression we selected the mean 2023 and reporting country column from the excess mortality dataframe. We merged this with the 'percentage vaccinated' column to create a dataframe with the percentage vaccinated and the mean excess deaths in 2023 for each country. When doing this we were unable to preserve data for both the total EU and Switzerland as these were not available categories in the vaccine dataset. 
+To run the regression we selected the mean 2023 and reporting country column from the excess mortality dataframe. We merged this with the 'percentage vaccinated' column to create a dataframe with the percentage vaccinated and the mean excess mortality in 2023 for each country. When doing this we were unable to preserve data for both the total EU and Switzerland as these were not available categories in the vaccine dataset. 
 
 ```{python}
 # New dataframe with only ReportingCountry and Mean 2023 from excess mortality 
@@ -555,7 +555,8 @@ for x, y, country in zip(vaccine_dict['Janssen']['% vaxed'],
     axs[1, 1].set_title(f"\n Janssen \n$rvalue$ = {round(JAN_linregress['r-value'],4)} \n$pvalue$ = {round(JAN_linregress['p-value'],4)}")
 
 for ax in axs.flat:
-    ax.set(xlabel='Percentage vaccinated as of 2023', ylabel='Mean Excess Death 2023')
+
+    ax.set(xlabel='Percentage vaccinated as of 2023', ylabel='Mean Excess Mortality 2023')
 
 
 plt.tight_layout()
@@ -564,7 +565,7 @@ plt.tight_layout()
 plt.show()
 ```
 
-The proportion of the population vaccinated with both Astrazeneca and Pfizer vaccines at the end of 2022, appears to have medium positive correlation with excess death in 2023. They have r values of 0.5663 and 0.583 respectively. The low p values of these plots show that they are statistically surprising and are worth looking into in more detail.  
+The proportion of the population vaccinated with both Astrazeneca and Pfizer vaccines at the end of 2022, appears to have medium positive correlation with excess mortality in 2023. They have r values of 0.5663 and 0.583 respectively. The low p values of these plots show that they are statistically surprising and are worth looking into in more detail.  
 
 The Janssen plot has a p-value of 0.33 and therefore we cannot make any conclusions as to the nature of the relationship between Janssen vaccination uptake and excess mortality in 2023. 
 
@@ -589,7 +590,7 @@ Even after removing this outlier the p-value still remains at 0.2826. Again no c
 ### Permutation test
 
 
-The p-value and r-values from the linregress function assume linearity and independence of the given variables. Unfortunately, due to the highly interconnected value of mortality which can be affected by a variety of factors and the fact that the vaccination rate itself is affected by death rates it is un-wise to take those values at face value.
+The p-value and r-values from the linregress function assume linearity and independence of the given variables. Unfortunately, due to the highly interconnected value of mortality which can be affected by a variety of factors and the fact that the vaccination rate itself is affected by mortality it is un-wise to take those values at face value.
 
 Instead we chose to use the permutation test. A method that shuffles one column of variables between two different types of vaccines and then takes the slope for each new null word vaccine substracts them and compare the given difference to the real world slope difference. It does this thousands of times and tells you have far the real world data is from a null world hypothesis. Ie: in worlds where the relationship between vaccine rates and mortality rates is random how many times would you find the real world value.
 
@@ -710,3 +711,7 @@ pd.DataFrame(mean_2023_mortality.sort_values(by = 'p_proj_all_ages', ascending =
 
 
 
+
+```{python}
+
+```
