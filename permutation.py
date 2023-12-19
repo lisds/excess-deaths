@@ -35,12 +35,13 @@ import scipy.stats as sps
 
 
 
-def permute(Vax1_str, Vax2_str):
-    Vax1 = sps.linregress(vaccine_dict[Vax1_str]['% vaxed'], vaccine_dict[Vax1_str]['Mean 2023'])
-    Vax2 = sps.linregress(vaccine_dict[Vax2_str]['% vaxed'], vaccine_dict[Vax2_str]['Mean 2023'])
+def permute(Vax1_str, Vax2_str, dict):
+    rng = np.random.default_rng()
+    Vax1 = sps.linregress(dict[Vax1_str]['% vaxed'], dict[Vax1_str]['Mean 2023'])
+    Vax2 = sps.linregress(dict[Vax2_str]['% vaxed'], dict[Vax2_str]['Mean 2023'])
     real_diff = Vax1.slope - Vax2.slope
-    first_array = vaccine_dict[Vax1_str]['% vaxed']
-    second_array = vaccine_dict[Vax2_str]['% vaxed']
+    first_array = dict[Vax1_str]['% vaxed']
+    second_array = dict[Vax2_str]['% vaxed']
     pool = np.concatenate([first_array, second_array])
 
     
@@ -48,8 +49,8 @@ def permute(Vax1_str, Vax2_str):
     
     for i in np.arange(10000):
         shuff = rng.permutation(pool)
-        fakeVax1 = sps.linregress(shuff[0:len(first_array)], vaccine_dict[Vax1_str]['Mean 2023'])
-        fakeVax2 = sps.linregress(shuff[len(first_array):], vaccine_dict[Vax2_str]['Mean 2023'])
+        fakeVax1 = sps.linregress(shuff[0:len(first_array)], dict[Vax1_str]['Mean 2023'])
+        fakeVax2 = sps.linregress(shuff[len(first_array):], dict[Vax2_str]['Mean 2023'])
         fake_diff = fakeVax1.slope - fakeVax2.slope
         fake_difference[i] = fake_diff
         diff_act = np.count_nonzero(fake_difference <= real_diff)
