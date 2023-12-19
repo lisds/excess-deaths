@@ -100,7 +100,7 @@ The data downloads and reads in an awkward format. The country column is labelle
 
 ```{python}
 #Reading in initial excess mortality data
-dirty_mortality = pd.read_excel('data/excess_death.xlsx', sheet_name = 'Sheet 1', skiprows=7, skipfooter=6)
+dirty_mortality = pd.read_excel('data/excess_mortality.xlsx', sheet_name = 'Sheet 1', skiprows=7, skipfooter=6)
 dirty_mortality.head()
 ```
 
