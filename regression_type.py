@@ -11,15 +11,17 @@ def linregress_table(vaccine_dict):
         x = column['% vaxed']
         y = column['Mean 2023']
 
-        slope, intercept, r_value, p_value, blah = sps.linregress(x,y)
+        if np.std(x) == 0:
+            print("Skipping "+vaccine_type+" due to identical x values.")
+            continue
 
+        slope, intercept, r_value, p_value, blah = sps.linregress(x,y)
 
         value_table.loc[vaccine_type] = [slope, p_value, r_value]
 
     return value_table
 
 
-#it works for me
 
 
 
