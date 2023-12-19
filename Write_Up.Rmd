@@ -492,18 +492,23 @@ vaccine_dict
 plot1.plot_vax(vaccine_dict, '% vaxed', 'Mean 2023')
 ```
 
-The only vaccine types with a sufficient amounts of datato justify further analysis are Astrazeneca, Pfizer, Janssen and Moderna. 
+The only vaccine types 
 
 ```{python}
-fig, axs = plt.subplots(2, 2, figsize = [10, 8])
+
+```
+
+```{python}
+
+fig, axs = plt.subplots(2, 2, figsize=(10, 8))
 
 for x, y, country in zip(vaccine_dict['Astrazeneca']['% vaxed'],
                          vaccine_dict['Astrazeneca']['Mean 2023'],
                          vaccine_dict['Astrazeneca']['ReportingCountry']):
     axs[0, 0].scatter(x, y)
-    axs[0, 0].text(x, y, country, fontsize=8, ha='right', va='bottom')  
+    axs[0, 0].text(x, y, country, fontsize=8, ha='right', va='bottom')
     axs[0, 0].set_title('AstraZeneca')
-    
+
 
 for x, y, country in zip(vaccine_dict['Moderna']['% vaxed'],
                          vaccine_dict['Moderna']['Mean 2023'],
@@ -517,7 +522,7 @@ for x, y, country in zip(vaccine_dict['Pfizer']['% vaxed'],
                          vaccine_dict['Pfizer']['Mean 2023'],
                          vaccine_dict['Pfizer']['ReportingCountry']):
     axs[1, 0].scatter(x, y)
-    axs[1, 0].text(x, y, country, fontsize=8, ha='right', va='bottom')  
+    axs[1, 0].text(x, y, country, fontsize=8, ha='right', va='bottom')  # Adjust fontsize and position as needed
     axs[1, 0].set_title('Pfizer')
 
 
@@ -525,37 +530,17 @@ for x, y, country in zip(vaccine_dict['Janssen']['% vaxed'],
                          vaccine_dict['Janssen']['Mean 2023'],
                          vaccine_dict['Janssen']['ReportingCountry']):
     axs[1, 1].scatter(x, y)
-    axs[1, 1].text(x, y, country, fontsize=8, ha='right', va='bottom')  
+    axs[1, 1].text(x, y, country, fontsize=8, ha='right', va='bottom')  # Adjust fontsize and position as needed
     axs[1, 1].set_title('Janssen')
 
+for ax in axs.flat:
+    ax.set(xlabel='Percentage Vaccinated', ylabel='Mean Excess Death 2023')
 
 
 plt.tight_layout()
 
 
 plt.show()
-```
-
-```{python}
-no_LI = vaccine_dict['Moderna'][vaccine_dict['Moderna']['ReportingCountry'] != 'LI']
-no_LI_regression = sps.linregress(no_LI['% vaxed'], no_LI['Mean 2023'])
-```
-
-```{python}
-
-no_LI = vaccine_dict['Moderna'][vaccine_dict['Moderna']['ReportingCountry'] != 'LI']
-plt.scatter(no_LI['% vaxed'], no_LI['Mean 2023'])
-for i in range(len(no_LI)):
-    plt.text(no_LI['% vaxed'].iloc[i], no_LI['Mean 2023'].iloc[i], no_LI['ReportingCountry'].iloc[i])
-plt.xlabel('% vaxed')
-plt.ylabel('Excess mortality 2023')
-plt.title(f"\n Moderna plot without Lichenstein\n$rvalue$ = {round(no_LI_regression.rvalue,4)} \n$pvalue$ = {round(no_LI_regression.pvalue,4)}")
-
-
-```
-
-```{python}
-sps.linregress(no_LI['% vaxed'], no_LI['Mean 2023'])
 ```
 
 ```{python}
