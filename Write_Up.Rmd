@@ -519,7 +519,7 @@ The only vaccine types with suffcient data to merit further inspection are the 4
 ```{python}
 
 
-=======
+
 AZ_linregress = table_regress_type.loc['Astrazeneca']
 MOD_linregress = table_regress_type.loc['Moderna']
 PF_linregress = table_regress_type.loc['Pfizer']
