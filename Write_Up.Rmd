@@ -7,7 +7,7 @@ jupyter:
       extension: .Rmd
       format_name: rmarkdown
       format_version: '1.2'
-      jupytext_version: 1.15.2
+      jupytext_version: 1.16.0
   kernelspec:
     display_name: Python 3 (ipykernel)
     language: python
@@ -19,7 +19,7 @@ jupyter:
       version_minor: 0
 ---
 
-# Is there a link between certain Covid-19 vaccines and 2023 excess all-cause mortality in the EU?
+# Investigating the relationship between specific Covid-19 vaccines and excess all-cause mortality in the EU in 2023
 
  To remember:
 
@@ -179,7 +179,7 @@ The data is collected through The European Surveillance System (TESSy), and are 
 #### Cleaning vaccination data
 
 ```{python}
-#Reading in initial vaccination data
+#Reading in initial vaccination data, may take up to 5 minutes.
 dirty_vaccine_data = pd.read_excel('data/vaccine_types.xlsx')
 dirty_vaccine_data.head()
 ```
@@ -242,16 +242,16 @@ And the following dataframe is for Covid-19 vaccination:
 vaccine_data.head()
 ```
 
-This dataframe gives you a matrix of age breakdown by dose by week per vaccine type by country. Thus, every week has multiple rows each corresponding to different age categories and the groups correspond to their vaccine type. 
+This dataframe gives you a matrix of age breakdown by dose, by week, per vaccine type, by country. Thus, every week has multiple rows each corresponding to different age categories and country groups corresponding to their vaccine type. 
 
 
 ### Preliminary Analysis
 
-We will begin with a preliminary analysis for 2023 to see whether uptake of Covid-19 vaccines in general have a relationship with excess mortality across european countries. 
+We will begin with a preliminary analysis for 2023 to see whether the uptake of Covid-19 vaccines in general has a relationship with excess mortality across european countries. 
 
 In order to get an idea of excess mortality across Europe we have calculated a mean excess mortality for the 9 recorded months of 2023 for all EU countries and the EU as a whole. We chose to focus on excess mortality from the beginning of 2023 because the majority of COVID-19 vaccines were administered in 2021 and 2022. 
 
-Our initial regression mirrors the approach taken by Aarstad and Kvitastein (2023) in their recent paper which regressed all cause mortality in the first 9 months of 2022 on vaccination uptake (at the turn of 2022) but expands upon it with more first doses of vaccines having been administered in 2022 providing a larger set of data points.
+Our initial regression mirrors the approach taken by Aarstad and Kvitastein (2023) in their recent paper which regressed all cause mortality in the first 9 months of 2022 on vaccination uptake (at the turn of 2022). We expand upon it since more first doses of vaccines having been administered in 2022, providing a larger set of data points.
 
 This provides a cutoff point for a 'fair' investigation - vaccination counts are counted up until 2023 and excess mortality mean is calculated from the beggining of 2023.
 
@@ -275,12 +275,14 @@ plt.xticks(rotation=90)
 plt.show
 ```
 
-##### Inital regression of mean excess mortality against vaccination percentage for EU countries
+In the above plot we can see the breakdown of the mean excess mortality per country in 2023. It is interesting to note that with the exception of Lichtenstein the mean mortality is only below zero in Eastern Europe.
+
+#### Inital regression of mean excess mortality against vaccination percentage for EU countries
 
 
 In order to account for varying population sizes, we used the percentage of vaccinated individuals in countries.
 
-The first dose column contains the number of first dose vaccines administered to individuals during the reporting week. We summed all of these values up until 2023, to get a total number of people in each country who had received a first dose of any type of vaccine. By selecting first dose only, we made a binary categorisation: vaccinated or not.
+The first dose column contains the number of first dose vaccines administered to individuals during the reporting week. We summed all of these values up until 2023, to get a total number of people in each country who had received a first dose of any type of vaccine. By selecting first dose only, we chose a binary categorisation: vaccinated or not.
 
 ```{python}
 total_vaxed_up_to_23 = vaccine_data[vaccine_data['Year'] != '2023'][vaccine_data['TargetGroup'] == 'ALL'].groupby('ReportingCountry')['FirstDose'].sum()
@@ -325,11 +327,11 @@ plt.plot(percent_vaxed_wk1_23, regression[1] + regression[0]*percent_vaxed_wk1_2
 plt.show()
 ```
 
-This initial linear regression plot yielded a correlation coefficient of 0.63, indicating a moderate postitive correlation between mean 2023 excess all-cause mortality and the percentage of the population that was vaccinated at the end of 2022. The positive correlation suggests that the higher a country's proportion of vaccinated individuals, the higher their levels of excess all-cause mortality. The gradient of the best fit line suggests that for every 1% incresase in vaccination uptake a 0.344% increase in excess mortaility is to be expected. A very small p-value of 0.0003 enables us to have high confidence that the observed correlation did not arise from our null-model of no correlation.
+This initial linear regression plot yielded a correlation coefficient of 0.63, indicating a moderate positive correlation between the mean 2023 excess all-cause mortality and the percentage of the population that was vaccinated at the end of 2022. The positive correlation suggests that the higher a country's proportion of vaccinated individuals, the higher their levels of excess all-cause mortality. The gradient of the best fit line suggests that for every 1% incresase in vaccination uptake a 0.344% increase in excess mortaility is to be expected. A very small p-value of 0.0003 enables us to have high confidence that the observed correlation did not arise by chance from our null-model of no correlation.
 
 We will now investigate whether linear regression is an appropriate technique to investigate the relationship between percentage vaccinated pre 2023 and mean excess mortality in 2023.
 
-##### Residual error plot
+#### Residual error plot
 
 
 
@@ -347,7 +349,7 @@ plt.ylabel('Mean Excess Mortality 2023')
 plt.title('Depicting residual error')
 ```
 
-We used a residual vs fitted value plot to check whether the relationship between a country' percentage of vaccinated individals and its excess mortality, is adequately captured by a linear model.
+We used a residual vs fitted value plot to check whether the relationship between a country's percentage of vaccinated individals and its excess mortality is adequately captured by a linear model.
 
 ```{python}
 # Checking for linearity
@@ -376,7 +378,7 @@ plt.ylabel('Frequency')
 plt.title('Plotting the distribution of the residual errors')
 ```
 
-This histogram doesn't help us very much, as it doesn't look very bell-shaped but also doesn't give us a very good idea of what the distribution is. To further investigate the normality of the residuals, we plotted a Q-Q plot of the residuals.
+This histogram does not help us much, as it does not look bell-shaped nor does it give us a good idea of what the distribution is. To further investigate the normality of the residuals, we plotted a Q-Q plot of the residuals.
 
 ```{python}
 import statsmodels.api as sm
@@ -385,7 +387,7 @@ plt.title('Q-Q residual plot')
 plt.show()
 ```
 
-Since, the majority of the residuals seem to fall along the straight line, with no significant systemic deviation we can infer that the residuals are approximately normally distributed.
+Since, the majority of the residuals seem to fall along a straight line, with no significant systemic deviation we can infer that the residuals are approximately normally distributed.
 
 
 Finally, to check how the residuals vary with changes in the chosen regressor, we plotted a residual vs regressor plot for each regressor.
@@ -412,25 +414,24 @@ plt.title('Residual vs. Regressor Plot (for mortality regressor)')
 plt.show()
 ```
 
-The second of these regression plots looks slightly abnormal in that there seems to be a pattern in the distribution of the residuals. Due to time contraints, we will be sticking to linear regression however further research into whether non-linear models could be more appropriate to model the relationship is recommended.
+The second of these regression plots looks slightly abnormal in that there seems to be a pattern in the distribution of the residuals. Due to time contraints, we will be sticking to linear regression however further research into whether non-linear models could be more appropriate to model the relationship is recommended. As well as a thorough verification of the confidence of our linear regression such as a permutation test, in case the p-value is influenced by potential non-linearity.
 
 ##### Assumptions/limitations
 
-- Using vaccination percentage up to 2023 then mean mortality since start of 2023
-- Mean mortality across 2023 could flatten the seasonality of excess mortality?
-- Just focusing on first doses
-- We know it is correlated but the question is whether vaccination rate impacted excess mortality - look into confounding variables 
+Our current assumptions an limitations start with the cut off of vaccinations at the first week of 2023 while taking mortality from the start of 2023 onwards. This may limit any overlapping relationships. Alos, using the mean mortality across 2023 may flatten seasonal behaviours of mortality. Lastly, just focusing on first doses may limit the scope of the vaccine's impact on health.
+
+We now know that there is a correlation but the question is whether vaccination rate directly impacted excess mortality - thus it is important to look into confounding variables.
 
 ##### Regression of mean excess mortality against vaccination percentage for EU countries by vaccination 
 
 
-So far, we have only investigated whether there seems to be a relationship between the percentage of vaccinated individuals and 2023 excess mortality across EU countries. We have only explored this in terms of vaccination *by any* Covid-19 vaccine. 
+So far, we have only investigated whether there is a relationship between the percentage of vaccinated individuals and 2023 excess mortality across EU countries. We have only explored this in terms of vaccination *by any* Covid-19 vaccine. 
 
 Our vaccination data includes the weekly number of first doses by each vaccination type (for each country). Different vaccine manufacturers produce different kinds of vaccines. Pfizer-BioTech and Moderna are both mRNA vaccines, which are are supposedly linked to an increased number of cardiac incidents (Paknahad et.al, 2023). Both the Oxford Astrazeneca and Janssen (Johnson and Johnson) vaccines are viral vector vaccines. It is resonable to suggest that each vaccine type could have a different impact on the health of individuals, and therefore excess mortality.
 
 We  investigated the relationship between excess mortality and vaccine by manufacturer. We used the same mean excess mortality figure from our first regresssion.
 
-We first created a dataframe containing number of first doses administered up until 2023, grouped by both type and country simaltaneously. 
+We first created a dataframe containing the number of first doses administered up until 2023, grouped by both type and country simultaneously. 
 
 ```{python}
 by_type_and_country = vaccine_data[(vaccine_data['Year'] != '2023') & (vaccine_data['TargetGroup'] == 'ALL')].groupby(['ReportingCountry','Vaccine'])['FirstDose'].sum()
@@ -438,6 +439,8 @@ by_type_and_country = by_type_and_country.reset_index()
 by_type_and_country.head()
 ```
 
+
+We then added the population count from week 1 which we used to get the % vaccinated broken down by each type of vaccine.
 
 ```{python}
 by_type_and_country = pd.merge(by_type_and_country, population_wk1_23, on = 'ReportingCountry')
@@ -447,9 +450,13 @@ by_type_and_country = pd.merge(by_type_and_country, population_wk1_23, on = 'Rep
 by_type_and_country['% vaxed'] = by_type_and_country['FirstDose'] / by_type_and_country['Population']
 ```
 
+We also set aside the excess mortality mean with the reporting country column in preparation to bring all the data together.
+
 ```{python}
 just_means = excess_mortality[['Mean 2023', 'ReportingCountry']]
 ```
+
+To make the vaccine names more comprehensible we renamed them according to the full vaccine names. That information came with the dataset in a separate file.
 
 ```{python}
 vaccine_rename = {
@@ -480,6 +487,8 @@ by_type_and_country[['VaccineType']]
 by_type_and_country.head()
 ```
 
+We used our own function 'merge_vaccines' to automatically merge all the data into a dictionnary where each key is a vaccine type and each value is a corresponding dataset with the country name, percent vaxed and the country's excess mortality mean.
+
 ```{python}
 import merge
 import plot1
@@ -489,8 +498,10 @@ vaccine_type = by_type_and_country['VaccineType'].drop_duplicates()
 
 ```{python}
 vaccine_dict = merge.merge_vaccines(by_type_and_country, just_means, vaccine_type)
-#vaccine_dict
+vaccine_dict
 ```
+
+Now this dictionary can easily be fed into another function that produces a table with the slope, p-value and r-value for each vaccine type obtained by calulating the linear regression against the excess mortality mean. Due to limited values in some vaccines we removed certain vaccines from the process.
 
 ```{python}
 import regression_type
@@ -500,15 +511,8 @@ table_regress_type.apply(lambda s: s.apply('{0:.5f}'.format))
 
 
 
-```{python}
-import merge
-import plot1
-```
 
-```{python}
-vaccine_dict = merge.merge_vaccines(by_type_and_country, just_means, vaccine_type)
-#vaccine_dict
-```
+We can now plot the values for each type of vaccine.
 
 ```{python}
 plot1.plot_vax(vaccine_dict, '% vaxed', 'Mean 2023')
@@ -517,9 +521,6 @@ plot1.plot_vax(vaccine_dict, '% vaxed', 'Mean 2023')
 The only vaccine types with suffcient data to merit further inspection are the 4 most uptaken vaccines (Pfizer, Moderna, Astrazenica and Janssen) as you can see from the scale of the x axes on all of the plots.  
 
 ```{python}
-
-
-=======
 AZ_linregress = table_regress_type.loc['Astrazeneca']
 MOD_linregress = table_regress_type.loc['Moderna']
 PF_linregress = table_regress_type.loc['Pfizer']
@@ -575,7 +576,7 @@ The proportion of the population vaccinated with both Astrazeneca and Pfizer vac
 
 The Janssen plot has a p-value of 0.33 and therefore we cannot make any conclusions as to the nature of the relationship between Janssen vaccination uptake and excess mortality in 2023. 
 
-The moderna plot inlcudes an outlier in Lichenstein. We decided to remove this anomalous result.   
+The moderna plot inlcudes an outlier in Lichenstein. We decided to remove this anomalous result to see if that changes the outcome.  
 
 ```{python}
 no_LI = vaccine_dict['Moderna'][vaccine_dict['Moderna']['ReportingCountry'] != 'LI']
@@ -596,32 +597,18 @@ Even after removing this outlier the p-value still remains at 0.2826. Again no c
 ### Permutation test
 
 
-The p-value and r-values from the linregress function assume linearity and independence of the given variables. Unfortunately, due to the highly interconnected value of mortality which can be affected by a variety of factors and the fact that the vaccination rate itself is affected by death rates it is un-wise to take those values at face value.
+The p-values and r-values from the linregress function assume linearity and independence of the given variables. Unfortunately, due to the highly interconnected value of mortality which can be affected by a variety of factors and the fact that the vaccination rate itself is affected by death rates it is un-wise to take these assumption as fact.
 
-Instead we chose to use the permutation test. A method that shuffles one column of variables between two different types of vaccines and then takes the slope for each new null word vaccine substracts them and compare the given difference to the real world slope difference. It does this thousands of times and tells you have far the real world data is from a null world hypothesis. Ie: in worlds where the relationship between vaccine rates and mortality rates is random how many times would you find the real world value.
+Instead we chose to use the permutation test. A method that shuffles one column of variables between two different types of vaccines and then takes the slope for each new null world vaccine substracts them and compares the given difference to the real world slope difference. It does this thousands of times and tells you how far the real world data is from a null world hypothesis. Essentially, in worlds where the relationship between vaccine rates and mortality rates is random how many times would you find the real world value?
 
-In our case between Astrazeneca and Pfizer their data is so unlikely that among a million trials their difference never shows up. This means that the model we’be made is extremely significant.
-
-```{python}
-PFI = sps.linregress(vaccine_dict['Pfizer']['% vaxed'], vaccine_dict['Pfizer']['Mean 2023'])
-ASTRA = sps.linregress(vaccine_dict['Astrazeneca']['% vaxed'], vaccine_dict['Astrazeneca']['Mean 2023'])
-SDIFF = ASTRA.slope - PFI.slope
-```
+In our case between Astrazeneca and Pfizer the data is so unlikely that among a million trials their difference never shows up. This means that the model we’ve made is extremely significant.
 
 ```{python}
 import permutation
 permutation.permute('Pfizer', 'Astrazeneca', vaccine_dict)
 ```
 
-```{python}
-
-```
-
-```{python}
-
-```
-
-When running the above code the closer you get to 5000 the less significant the model is. The closer it is to 0 or 10000 the better the level of significance. Among our data the relationship between mortality rates and vaccine rates can be confirmed.
+To speed up the process the above code only does 10,000 iterations. Running the above code the closer you get to 5000 the less significant the model is. The closer it is to 0 or 10,000 the better the level of significance. Among our data the relationship between mortality rates and vaccine rates is definitely not random as the number we get when comparing Phizer or Astrazeneca to any vaccine is 0.
 
 ### Further interrogation of the results
 
