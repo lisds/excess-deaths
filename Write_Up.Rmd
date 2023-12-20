@@ -58,11 +58,11 @@ The inclusion of 30 European countries in our study provides a rich dataset that
 
 Excess mortality following the COVID-19 pandemic has raised concerns globally. Various countries have reported significant deviations from expected mortality rates. Notably, the United States witnessed a substantial 5-12% weekly increase in all-cause excess mortality during the latter half of 2022 (CDC, 2023). Similarly, the United Kingdom experienced six consecutive quarters of excess mortality as of September 2023 (O'Dowd, 2023), and Australia recorded a 7% excess mortality in the first five months of 2023, although they attributed half of these deaths to COVID-19 (Adair, 2023). 
 
-Increased excess mortality in 2023 is considered particularly suprising since we have recently emerged from a pandemic during which, it would be expected that vulnerable populations have already passed away. The current state of affairs suggests an underwhelming response to this phemonea and a lack of proactive measures towards its investigation, motivating our exploration in this project..
+Increased excess mortality in 2023 is considered particularly suprising since we have recently emerged from a pandemic during which, it would be expected that vulnerable populations have already passed away. The current state of affairs suggests an underwhelming response to this phemonea and a lack of proactive measures towards its investigation, motivating our exploration in this project.
 
 The underlying causes of post-pandemic excess mortality remain a subject of debate and investigation. In a UK parliamentary debate on October 20, 2023, former Tory MP Andrew Bridgen stated that COVID-19 vaccines were rushed through trials and therefore might be contributing to the observed increase in excess mortality. Bridgen criticised the Office for National Statistics (ONS) and the Medicine and Healthcare Products Regulatory Agency (MHRA) for mishandling data to promote a pro-vaccine agenda.
 
-The UK Department for Health and Social Care asserted that there was no evidence linking excess mortality to COVID-19 vaccines. The published report has since been removed from the government website, but can still be accessed [here](https://dailysceptic.org/wp-content/uploads/2023/11/Final-Briefing-on-Excess-Deaths-24-October-2023.pdf). The report has many shortcomings. It considered all vaccine types homogenously and there were inconsistencies in reported data related on the number of unvaccinated individuals, monthly death figures, and age-standardized mortality rate calculations (Jefferson and Heneghan, 2023). 
+The UK Department for Health and Social Care asserted that there was no evidence linking excess mortality to COVID-19 vaccines. The report has since been removed from the government website, but can still be accessed [here](https://dailysceptic.org/wp-content/uploads/2023/11/Final-Briefing-on-Excess-Deaths-24-October-2023.pdf). The report has many shortcomings. It considered all vaccine types homogenously and there were inconsistencies in reported data related on the number of unvaccinated individuals, monthly death figures, and age-standardized mortality rate calculations (Jefferson and Heneghan, 2023). 
 
 Vaccine safety concerns were initiated during the Covid-19 pandemic with the suspension of AstraZeneca's COVID-19 vaccine in several European countries due to concerns over rare blood clots (McGrail, 2021). The debate over vaccine safety has been further fueled by reports of side effects, such as elevated risks of myocarditis and pericarditis associated with mRNA vaccines, though the causal links remain unclear (Alami et al., 2023). A study by Aarstad and Kvitastein (2023) found a correlation between 2021 general vaccination uptake in Europe and increased 2022 all-cause mortality, they conclude that one percentage point increase in 2021 general vaccination uptake was associated with a 2022 monthly mortality increase of 0.105 percent. 
 
@@ -581,7 +581,7 @@ for ax in axs.flat:
     ax.set(xlabel='Percentage vaccinated as of 2023', ylabel='Mean Excess Mortality 2023')
 
 
-plt.tight_layout()
+plt.tight_layout() 
 
 
 plt.show()
@@ -594,11 +594,11 @@ The Janssen plot has a p-value of 0.33 and therefore we cannot make any conclusi
 The moderna plot inlcudes an outlier in Lichenstein. We decided to remove this anomalous result to see if that changes the outcome.  
 
 ```{python}
-#
+#pull out moderna data that doesn't include LI values
 no_LI = vaccine_dict['Moderna'][vaccine_dict['Moderna']['ReportingCountry'] != 'LI']
 no_LI_regression = sps.linregress(no_LI['% vaxed'], no_LI['Mean 2023'])
 
-no_LI = vaccine_dict['Moderna'][vaccine_dict['Moderna']['ReportingCountry'] != 'LI']
+#plot a scatter graph with linear regression line
 plt.scatter(no_LI['% vaxed'], no_LI['Mean 2023'])
 for i in range(len(no_LI)):
     plt.text(no_LI['% vaxed'].iloc[i], no_LI['Mean 2023'].iloc[i], no_LI['ReportingCountry'].iloc[i])
@@ -608,7 +608,7 @@ plt.plot(no_LI['% vaxed'], no_LI_regression[1] + no_LI_regression[0]*no_LI['% va
 plt.title(f"\n Moderna plot without Lichenstein\n$rvalue$ = {round(no_LI_regression.rvalue,4)} \n$pvalue$ = {round(no_LI_regression.pvalue,4)}")
 ```
 
-Even after removing this outlier the p-value still remains at 0.2826. Again no conclusion can be made as to the nature of the moderna vaccine and excess mortality in 2023.
+Even after removing this outlier the p-value still remains at 0.2826. Again no conclusion can be made as to the nature of the relationship moderna vaccine and excess mortality in 2023.
 
 
 After looking at the Astrazeneca plot we noticed that Malta looked as though it could  be an outlier which was potentially largely responsible for the correlation, therefore we re-plotted the Astrazeneca linear regression omitting Malta. 
@@ -645,7 +645,7 @@ Instead we chose to use the permutation test. A method that shuffles one column 
 In our case between Astrazeneca and Pfizer the data is so unlikely that among a million trials their difference never shows up. This means that the model we’ve made is extremely significant.
 
 ```{python}
-#
+#import permutaion function
 import permutation
 permutation.permute('Pfizer', 'Astrazeneca', vaccine_dict)
 ```
@@ -795,3 +795,14 @@ plt.show()
 
 
 
+
+# Reference list
+
+
+
+Aarstad, J. and Kvitastein, O.A. (2023). Is There a Link between the 2021 COVID-19 Vaccination Uptake in Europe and 2022 Excess All-Cause Mortality? 25-31, [online] 10(1). doi:https://doi.org/10.21276/apjhs.2023.10.1.6.Alami, A., Krewski, D., Farhat, N., Mattison, D., Wilson, K., Gravel, C.A., Farrell, P.J., Crispo, J.A.G., Haddad, N., Perez-Lloret, S. and Villeneuve, P.J. (2023). Risk of myocarditis and pericarditis in mRNA COVID-19-vaccinated and unvaccinated populations: a systematic review and meta-analysis. BMJ Open, [online] 13(6), p.e065687. doi:https://doi.org/10.1136/bmjopen-2022-065687.Caul, S. (2023). How do we measure expected and excess deaths? | National Statistical. [online] blog.ons.gov.uk. Available at: https://blog.ons.gov.uk/2023/02/10/how-do-we-measure-expected-and-excess-deaths/ [Accessed 14 Dec. 2023].Centers for Disease Control and Prevention (2023). NVSS - Provisional Death Counts for COVID-19 - Executive Summary. [online] www.cdc.gov. Available at: https://www.cdc.gov/nchs/covid19/mortality-overview.htm.Department of Health and Social Care (2023). Trends in Excess Deaths and Covid-19 Vaccines.ECDC (2021). Data on COVID-19 vaccination in the EU/EEA. [online] European Centre for Disease Prevention and Control. Available at: https://www.ecdc.europa.eu/en/publications-data/data-covid-19-vaccination-eu-eea.Eurostat (2023). Excess mortality - statistics. [online] ec.europa.eu. Available at: https://ec.europa.eu/eurostat/statistics-explained/index.php?title=Excess_mortality_-_statistics#:~:text=Recent%20data%20on%20excess%20mortality%20in%20the%20EU [Accessed 20 Dec. 2023].Jefferson, T. and Heneghan, C. (2023a). [Correction] The UK government briefing paper ‘Trends in Excess Deaths and Covid-19 Vaccines.’ [online] Trust the Evidence. Available at: https://trusttheevidence.substack.com/p/correction-the-uk-government-briefing.Jefferson, T. and Heneghan, C. (2023b). Is Ebenezer Scrooge Running UK Pharmacovigilance? [online] Trust the Evidence. Available at: https://trusttheevidence.substack.com/p/is-ebenezer-scrooge-running-uk-pharmacovigilance?r=1lcx51&utm_campaign=post&utm_medium=web [Accessed 20 Dec. 2023].McDonald, S. (2022). Why have there been excess deaths this summer? [online] UK in a changing Europe. Available at: https://ukandeu.ac.uk/why-have-there-been-excess-deaths-this-summer/ [Accessed 14 Dec. 2023].Mohammad Hossein Paknahad, Fatereh Baharlouei Yancheshmeh and Soleimani, A. (2023). Cardiovascular complications of COVID-19 vaccines: A review of case-report and case-series studies. Heart & Lung, [online] 59, pp.173–180. doi:https://doi.org/10.1016/j.hrtlng.2023.02.003.O’Dowd, A. (2023). Covid-19: UK death rate is still higher than before pandemic. BMJ, [online] 383, p.p2371. doi:https://doi.org/10.1136/bmj.p2371.PharmaNewsIntelligence (2021). European Countries Suspend Use of AstraZeneca’s COVID-19 Vaccine. [online] PharmaNewsIntelligence. Available at: https://pharmanewsintel.com/news/european-countries-suspend-use-of-astrazenecas-covid-19-vaccine.University, A.P.T.A., University of Melbourne; Associate Professor Brian Houle, Australian National University and University of the Witwatersrand, and Professor Vladimir Canudas-Romo, Australian National (2023). The rise and fall in Australia’s life expectancy during the pandemic. [online] Pursuit. Available at: https://pursuit.unimelb.edu.au/articles/the-rise-and-fall-in-australia-s-life-expectancy-during-the-pandemic#:~:text=During%20the%20first%20five%20months [Accessed 14 Dec. 2023].
+
+
+```{python}
+
+```
