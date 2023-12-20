@@ -97,6 +97,7 @@ dirty_mortality.head()
 ```
 
 ```{python}
+# Remove GEO row
 drop_labels = dirty_mortality.drop(index= 0)
 #drop_labels.head()
 ```
@@ -270,6 +271,7 @@ population_wk1_23 = vaccine_data[vaccine_data['YearWeekISO'] == '2023-W01'].grou
 
 #Converting the number of people vaccinated into a proportion of the population
 percent_vaxed_wk1_23= total_vaxed_up_to_23/population_wk1_23 * 100
+
 ```
 
 To run the regression we selected the mean 2023 and reporting country column from the excess mortality dataframe. We merged this with the 'percentage vaccinated' column to create a dataframe with the percentage vaccinated and the mean excess mortality in 2023 for each country. When doing this we were unable to preserve data for both the total EU and Switzerland as these were not available categories in the vaccine dataset. 
@@ -280,6 +282,11 @@ country_and_mean = excess_mortality[['ReportingCountry', 'Mean 2023']]
 # Merge percentaged vaccinated into new merged dataframe
 merged = pd.merge(country_and_mean, pd.DataFrame(percent_vaxed_wk1_23), on = 'ReportingCountry').rename(columns ={0: '% Vaxed'})
 merged.head()
+```
+
+```{python}
+percent_vaxed_wk1_23
+merged['% Vaxed']
 ```
 
 ```{python}
@@ -297,7 +304,7 @@ for i in range(len(merged)):
 plt.xlabel('Percent Vaccinated as of 2023')
 plt.ylabel('Mean Excess Mortality 2023')
 plt.title(f"\n Vaccination uptake versus mean excess mortality\n$rvalue$ = {round(regression.rvalue,4)} \n$pvalue$ = {round(regression.pvalue,4)}")
-plt.plot(percent_vaxed_wk1_23, regression[1] + regression[0]*percent_vaxed_wk1_23, 'r', label='fitted line')
+plt.plot(percent_vaxed_wk1_23, regression[1] + regression[0]*percent_vaxed_wk1_23, 'r')
 
 plt.show()
 ```
@@ -466,20 +473,24 @@ by_type_and_country['VaccineType'] = by_type_and_country['Vaccine'].replace(vacc
 ```
 
 ```{python}
+
 # Import .py file which performs linear regression for each type of vaccine by uptake against excess mortality in EU countries
 by_type_and_country[['VaccineType']].head()
+
 ```
 
 We used our own function 'merge_vaccines' to automatically merge all the data into a dictionnary where each key is a vaccine type and each value is a corresponding dataset with the country name, percent vaxed and the country's excess mortality mean.
 
 ```{python}
-#
+#import merge function
 import merge
 
-# 
+#create  list of all vaccine types
 vaccine_type = by_type_and_country['VaccineType'].drop_duplicates()
 
-#
+
+#create dictionary with vaccine types as keys
+
 vaccine_dict = merge.merge_vaccines(by_type_and_country, country_and_mean, vaccine_type)
 #vaccine_dict.head()
 ```
@@ -487,28 +498,37 @@ vaccine_dict = merge.merge_vaccines(by_type_and_country, country_and_mean, vacci
 Now this dictionary can easily be fed into another function that produces a table with the slope, p-value and r-value for each vaccine type obtained by calulating the linear regression against the excess mortality mean. Due to limited values in some vaccines we removed certain vaccines from the process.
 
 ```{python}
-#
+
+# Import .py file which performs linear regression for each type of vaccine by uptake against excess mortality in EU countries
+
 import regression_type
+#create a table from the vaccine type dict with the regression p,r, slope and intercept values
 table_regress_type = regression_type.linregress_table(vaccine_dict)
 table_regress_type.apply(lambda s: s.apply('{0:.5f}'.format))
+#create a dataframe of the total number of first doses administered by type 
+count_by_type =pd.DataFrame(by_type_and_country.groupby('VaccineType')['FirstDose'].sum())
+#merge the two to add a column called first dose to the linregress table
+pd.merge(table_regress_type, count_by_type,left_index = True, right_index = True).sort_values('FirstDose', ascending = False)
 ```
 
 
 We can now plot the values for each type of vaccine.
 
 ```{python}
-#
+#import plotting function
 import plot1
 
 
-#
+#plot graphs for all vaccine types, percentage vaccination is the x axis, Mean exces death 2023 is the y axis. 
 plot1.plot_vax(vaccine_dict, '% vaxed', 'Mean 2023')
 ```
 
 The only vaccine types with suffcient data to merit further inspection are the 4 most uptaken vaccines (Pfizer, Moderna, Astrazenica and Janssen) as you can see from the scale of the x axes on all of the plots.  
 
 ```{python}
-#
+
+#store the desired rows in the linregress table as their own variable
+
 AZ_linregress = table_regress_type.loc['Astrazeneca']
 MOD_linregress = table_regress_type.loc['Moderna']
 PF_linregress = table_regress_type.loc['Pfizer']
@@ -516,16 +536,20 @@ JAN_linregress = table_regress_type.loc['Janssen']
 ```
 
 ```{python}
-#
-fig, axs = plt.subplots(2, 2, figsize=(10, 8))
 
+#create a 2x2 subplot 
+fig, axs = plt.subplots(2, 2, figsize=(10, 10))
+
+
+#create a scatter plot for vaccine, points are labeled with country code 
 for x, y, country in zip(vaccine_dict['Astrazeneca']['% vaxed'],
                          vaccine_dict['Astrazeneca']['Mean 2023'],
                          vaccine_dict['Astrazeneca']['ReportingCountry']):
     axs[0, 0].scatter(x, y)
     axs[0, 0].text(x, y, country, fontsize=8, ha='right', va='bottom')
     axs[0, 0].set_title(f"\n Astrazeneca \n$rvalue$ = {round(AZ_linregress['r-value'],4)} \n$pvalue$ = {round(AZ_linregress['p-value'],4)}")
-
+    #add a regression line
+    axs[0, 0].plot(vaccine_dict['Astrazeneca']['% vaxed'], AZ_linregress['intercept'] + AZ_linregress['slope'] * vaccine_dict['Astrazeneca']['% vaxed'], 'r')
 
 for x, y, country in zip(vaccine_dict['Moderna']['% vaxed'],
                          vaccine_dict['Moderna']['Mean 2023'],
@@ -533,7 +557,7 @@ for x, y, country in zip(vaccine_dict['Moderna']['% vaxed'],
     axs[0, 1].scatter(x, y)
     axs[0, 1].text(x, y, country, fontsize=8, ha='right', va='bottom')  
     axs[0, 1].set_title(f"\n Moderna \n$rvalue$ = {round(MOD_linregress['r-value'],4)} \n$pvalue$ = {round(MOD_linregress['p-value'],4)}")
-
+    axs[0, 1].plot(vaccine_dict['Moderna']['% vaxed'], MOD_linregress['intercept'] + MOD_linregress['slope'] * vaccine_dict['Moderna']['% vaxed'], 'r')
 
 for x, y, country in zip(vaccine_dict['Pfizer']['% vaxed'],
                          vaccine_dict['Pfizer']['Mean 2023'],
@@ -541,7 +565,7 @@ for x, y, country in zip(vaccine_dict['Pfizer']['% vaxed'],
     axs[1, 0].scatter(x, y)
     axs[1, 0].text(x, y, country, fontsize=8, ha='right', va='bottom')  # Adjust fontsize and position as needed
     axs[1, 0].set_title(f"\n Pfizer \n$rvalue$ = {round(PF_linregress['r-value'],4)} \n$pvalue$ = {round(PF_linregress['p-value'],4)}")
-
+    axs[1, 0].plot(vaccine_dict['Pfizer']['% vaxed'], PF_linregress['intercept'] + PF_linregress['slope'] * vaccine_dict['Pfizer']['% vaxed'], 'r')
 
 for x, y, country in zip(vaccine_dict['Janssen']['% vaxed'],
                          vaccine_dict['Janssen']['Mean 2023'],
@@ -549,7 +573,9 @@ for x, y, country in zip(vaccine_dict['Janssen']['% vaxed'],
     axs[1, 1].scatter(x, y)
     axs[1, 1].text(x, y, country, fontsize=8, ha='right', va='bottom')  # Adjust fontsize and position as needed
     axs[1, 1].set_title(f"\n Janssen \n$rvalue$ = {round(JAN_linregress['r-value'],4)} \n$pvalue$ = {round(JAN_linregress['p-value'],4)}")
-
+    axs[1, 1].plot(vaccine_dict['Janssen']['% vaxed'], JAN_linregress['intercept'] + JAN_linregress['slope'] * vaccine_dict['Janssen']['% vaxed'], 'r')
+    
+    
 for ax in axs.flat:
 
     ax.set(xlabel='Percentage vaccinated as of 2023', ylabel='Mean Excess Mortality 2023')
@@ -612,10 +638,7 @@ population_wk1_23.sort_values().head(10)
 
 ### Permutation test
 
-
-
 The p-values and r-values from the linregress function assume linearity and independence of the given variables. Unfortunately, due to the highly interconnected value of mortality which can be affected by a variety of factors and the fact that the vaccination rate itself is affected by death rates it is un-wise to take these assumption as fact.
-
 
 Instead we chose to use the permutation test. A method that shuffles one column of variables between two different types of vaccines and then takes the slope for each new null world vaccine substracts them and compares the given difference to the real world slope difference. It does this thousands of times and tells you how far the real world data is from a null world hypothesis. Essentially, in worlds where the relationship between vaccine rates and mortality rates is random how many times would you find the real world value?
 
@@ -626,18 +649,77 @@ In our case between Astrazeneca and Pfizer the data is so unlikely that among a 
 import permutation
 permutation.permute('Pfizer', 'Astrazeneca', vaccine_dict)
 ```
-
-
 To speed up the process the above code only does 10,000 iterations. Running the above code the closer you get to 5000 the less significant the model is. The closer it is to 0 or 10,000 the better the level of significance. Among our data the relationship between mortality rates and vaccine rates is definitely not random as the number we get when comparing Phizer or Astrazeneca to any vaccine is 0.
+
+
+Despite the confidence we have gained from our permutation test. Analysis this far has not taken into account other confounding variables that may have had an impact on 2023 mean excess death. 
+
+<!-- #region -->
+### Where are we now? 
+
+Based on our existing analysis we have observed a suprising relationship between the uptake of both the Pfizer and AstraZenica vaccines and all cause excess mortality in EU countries. 
+
+However, we have not considered for any external factors as yet in our analysis. We cannot be confident that other factors are not influencing our regression models as we haven't accounted for them. Indentifying these factors would help us in attempting to isolate the impact of vaccines from those factors.
+
+Such factors which could be influencing the results we are seeing are as follows: 
+
+- Strength of Countries' Healthcare Systems: Better healthcare could lead to lower mortality rates.
+- Age demographic of countries: Countries' with aging populations could tend towards certain vaccine types (for various reasons) which could make those vaccines appear to be influencing excess mortality. For example, countries with an aging population may be more affluent and opted for more expensive vaccines. 
+- Influenza Rates: If a country is also dealing with a flu outbreak, it could affect mortality rates.
+- Lockdown effects: Countries with stricter vaccination protocols seem likely to have had harsher lockdown restrictions. Strict lockdowns might have indirect health impacts, like increased alcohol consumption leading to more liver-related deaths (observed in the UK CITE)
+
+
+It will also be useful to explore any commonalities between the groupings of countries. This may help us indentify any further or more specific factors to be aware of: Which countries had similar vaccine profiles? Do they have other common traits? 
+Common traits may come in the form of - 
+- Political and Social Stability: Events such as conflicts, social unrest, or political turmoil can disrupt healthcare systems and influence mortality rates.
+- Socioeconomic Factors: Variables such as national income, employment rates, and public health policies might have a substantial impact on both vaccination rates and mortality outcomes.
+
+
+It would be beneficial to further investigate all of these factors and if possible include them in a multiple regression model alongside vaccination uptake by type. 
+
+<!-- #endregion -->
 
 ### Further interrogation of the results
 
-__Major limitations__ - look into potential known known confounders
-
-Age, flu, health service strain
+We will return to an initial histogram of mean excess all cause mortality to begin to investigate the impact external factors to our research could have had on our initial findings.
 
 
+```{python}
+plt.bar(x=excess_mortality.sort_values('Mean 2023').index, height=excess_mortality.sort_values('Mean 2023')['Mean 2023'])
+plt.xticks(rotation=90)
+plt.xlabel('Country')
+plt.ylabel('Mean Excess Mortality 2023')
+plt.title('Mean Excess Mortality 2023 by EU country')
+plt.show
+```
 
+##### Strength of Countries' Healthcare Systems:
+
+
+
+```{python}
+
+```
+
+##### Age demographic of countries
+
+```{python}
+
+
+
+##### Influenza Rates
+
+
+
+##### Adverse effects of lockdown
+
+Did certain countries lock down more than others? have they had more deaths?
+
+```{python}
+
+```
+
+### Exploring for commonalities
 
 __Explore Commonalities__ between similar groupings of countries. Which countries bought certain vaccines - are there any commonalities. 
 
@@ -691,7 +773,7 @@ plt.show()
 
 ```{python}
 mortality_by_age = pd.read_csv('data/excess-mortality-p-scores-projected-baseline-by-age.csv')
-mortality_by_age
+mortality_by_age.head()
 ```
 
 ```{python}
@@ -711,8 +793,16 @@ just_eu_2023
 
 ```{python}
 mean_2023_mortality = just_eu_2023.groupby('Entity').agg({'p_proj_0_14':'mean', 'p_proj_15_64': 'mean', 'p_proj_65_74':'mean', 'p_proj_75_84':'mean', 'p_proj_85p':'mean','p_proj_all_ages':'mean'})
+
 mean_by_age = pd.DataFrame(mean_2023_mortality.sort_values(by = 'p_proj_all_ages'))
 mean_by_age
+
+mean_2023_mortality.sort_values(by = 'p_proj_all_ages', ascending = False)
+```
+
+```{python}
+mean_2023_mortality[['p_proj_75_84', 'p_proj_85p']]
+
 ```
 
 ### Conclusion
@@ -723,7 +813,3 @@ mean_by_age
 
 
 
-
-```{python}
-
-```
