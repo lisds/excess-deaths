@@ -660,48 +660,46 @@ Despite the confidence we have gained from our permutation test. Analysis this f
 
 Based on our existing analysis we have observed a suprising relationship between the uptake of both the Pfizer and AstraZenica vaccines and all cause excess mortality in EU countries. 
 
-However, we have not considered for any external factors as yet in our analysis. We cannot be confident that other factors are not influencing our regression models as we haven't accounted for them. Indentifying these factors would help us in attempting to isolate the impact of vaccines from those factors.
+However, we have not considered yet for any external factors in our analysis. We cannot be confident that other factors are not influencing our regression model as we haven't accounted for them. Indentifying these factors would help us in attempting to isolate the impact of vaccines over and above those factors.
 
 Such factors which could be influencing the results we are seeing are as follows: 
 
-- Strength of Countries' Healthcare Systems: Better healthcare could lead to lower mortality rates.
-- Age demographic of countries: Countries' with aging populations could tend towards certain vaccine types (for various reasons) which could make those vaccines appear to be influencing excess mortality. For example, countries with an aging population may be more affluent and opted for more expensive vaccines. 
+- Age demographic of countries: Ageing populations could be leading to higher mortality rates.
+- Strength of Countries' Healthcare Systems: Weaker healthcare systems could be a factor in higher mortality rates.
 - Influenza Rates: If a country is also dealing with a flu outbreak, it could affect mortality rates.
-- Lockdown effects: Countries with stricter vaccination protocols seem likely to have had harsher lockdown restrictions. Strict lockdowns might have indirect health impacts, like increased alcohol consumption leading to more liver-related deaths (observed in the UK CITE)
+- Lockdown effects: Countries with stricter vaccination protocols may have had harsher lockdown restrictions. Stricter lockdowns might have adverse health impacts. For instance, increased alcohol consumption could be leading to more liver-related deaths in the UK (CITE).
 
 
-It will also be useful to explore any commonalities between the groupings of countries. This may help us indentify any further or more specific factors to be aware of: Which countries had similar vaccine profiles? Do they have other common traits? 
-Common traits may come in the form of - 
+It will also be useful to explore any commonalities between the groupings of countries. This may help us indentify any further  factors to be aware of. An important question to consider is - which countries had similar vaccine profiles and do they have other common traits? 
+
+Potential common traits could include:
 - Political and Social Stability: Events such as conflicts, social unrest, or political turmoil can disrupt healthcare systems and influence mortality rates.
 - Socioeconomic Factors: Variables such as national income, employment rates, and public health policies might have a substantial impact on both vaccination rates and mortality outcomes.
+- Demographic Factors: Countries' with aging populations could tend towards certain vaccine types (for various reasons) which could make those vaccines appear to be influencing excess mortality. For example, countries with an aging population may be more affluent and opted for more expensive vaccines. 
 
 
 It would be beneficial to further investigate all of these factors and if possible include them in a multiple regression model alongside vaccination uptake by type. 
 
 <!-- #endregion -->
 
-### Exploring other factors 
-We will return to an initial histogram of mean excess all cause mortality to begin to investigate the impact external factors to our research could have had on our initial findings.
+### Exploring other factors
 
-
-```{python}
-plt.bar(x=excess_mortality.sort_values('Mean 2023').index, height=excess_mortality.sort_values('Mean 2023')['Mean 2023'])
-plt.xticks(rotation=90)
-plt.xlabel('Country')
-plt.ylabel('Mean Excess Mortality 2023')
-plt.title('Mean Excess Mortality 2023 by EU country')
-plt.show
-```
-
-##### Strength of Countries' Healthcare Systems:
-
-
-
-```{python}
-
-```
+We will now explore for data on influencing factors to include any relevant data into a multiple regression.
 
 ##### Age demographic of countries
+
+In order to determine whether aging populations are playing a role in post-pandemic observed excess mortality we would look at population demographics to determine the presence of aging populations across EU countries. The best data we have found in limited time to represent this is the median age of the female popluation of EU countries.
+
+```{python}
+female_median = pd.read_excel('data/female_median_age.xlsx', sheet_name = 'Sheet 1', skiprows=7, skipfooter=6)
+desired_rows = female_median[['TIME', '2022']]
+our_countries = desired_rows[desired_rows['TIME'].isin(country_code_dict)]
+our_countries.head()
+```
+
+To investigate this further we would like to investigate how excess mortality varies across age groups. It would be revealing to look into which age groups are most influencing the excess mortality figures we have been exploring.
+
+Unfortunately our existing Eurostat data does not break down excess mortality by age group - so we have had to look for data elsewhere. The data we have found is printed below and looks suspicious with some seemingly unfeasible excess mortality figures e.g. Iceland 0-14.
 
 ```{python}
 
@@ -721,32 +719,35 @@ mean_2023_mortality = just_eu_2023.groupby('Entity').agg({'p_proj_0_14':'mean', 
 mean_by_age = pd.DataFrame(mean_2023_mortality.sort_values(by = 'p_proj_all_ages'))
 mean_by_age
 
-mean_2023_mortality.sort_values(by = 'p_proj_all_ages', ascending = False)
+mean_2023_mortality.sort_values(by = 'p_proj_all_ages', ascending = False).head()
 ```
 
-##### Influenza Rates
+##### Strength of Countries' Healthcare Systems, Influenza Rates and Lockdown Effects
 
-```{python}
+The EU scope and recent timeframe of our project has made finding data to represent these factors difficult. For each of these titled factors we could not find any up to date data.
 
-```
-
-<!-- #region -->
-
-
-##### Adverse effects of lockdown
-
-Did certain countries lock down more than others? have they had more deaths?
-
-
-<!-- #endregion -->
 
 ### Exploring for commonalities
 
-__Explore Commonalities__ between similar groupings of countries. Which countries bought certain vaccines - are there any commonalities. 
+We will now take a general look at the EU countries we have been using to investigate a potential link between certain COVID-19 vaccines and excess mortality. 
 
-- Which countries had most of each vaccine 
-- Did countries which got pfizer also get astrazenica? 
-- What was the spatial trend in vaccine type uptake?
+We will try and expose any common traits between countries with similar mortality statistics or vaccine profiles to try and unearth any underlying factors.
+
+
+First we will return to our initial bar plot representing the mean excess mortality for EU countries in 2023.   
+
+We can see the top 5 countries exhibiting excess mortality are: Malta, Ireland, Iceland, Netherlands & Cyprus. Whilst Romania, Bulgaria, Lithuania, Latvia and Liechtenstein make up the bottom five countries and are all displaying a decrease in mortality from the expected baseline
+
+```{python}
+plt.bar(x=excess_mortality.sort_values('Mean 2023').index, height=excess_mortality.sort_values('Mean 2023')['Mean 2023'])
+plt.xticks(rotation=90)
+plt.xlabel('Country')
+plt.ylabel('Mean Excess Mortality 2023')
+plt.title('Mean Excess Mortality 2023 by EU country')
+plt.show
+```
+
+Let's now have a look at the vaccine profiles of the top and bottom 5 countries for mean excess mortality in 2023. 
 
 ```{python}
 # Calculate the unvaccinated proportion
@@ -765,7 +766,13 @@ filtered_array = order_array[pd.Series(order_array).isin(pie_chart_data.index)].
 # Order pie chart data by excess mortality observed 2023 low > high
 ordered_pie_chart_data = pie_chart_data.reindex(filtered_array)
 
+# Top and bottom 5 for plots
+top_5 = ordered_pie_chart_data.tail(5)
+
+bottom_5 = ordered_pie_chart_data.head(5)
 ```
+
+##### Top 5 Mean Excess Mortality 2023 First-Dose Vaccination Profiles 
 
 ```{python}
 # Function to prevent overcrowding of percentage labels 
@@ -773,32 +780,94 @@ def custom_autopct(pct):
    return '{:.1f}%'.format(pct) if pct > 0.1 else ''
 
 # Create subplots
-fig, axes = plt.subplots(10, 3, figsize=(15, 50))  
+fig, axes = plt.subplots(2, 3, figsize=(20, 20))  
 # Flatten the axes array to allow for iteration
 axes = axes.flatten()  
 
 # Plot each pie chart
-for i, country in enumerate(ordered_pie_chart_data.index):
-    country_data = ordered_pie_chart_data.loc[country]
+for i, country in enumerate(top_5.index):
+    country_data = top_5.loc[country]
     # Creating custom labels
     labels = [label if value > 0.001 else '' for label, value in country_data.items()]
     axes[i].pie(country_data, labels=labels, autopct=lambda pct: custom_autopct(pct))
     axes[i].set_title(f'Vaccination Distribution in {country}')
     axes[i].axis('equal')
+    
 
+# Hide unused subplots 
+for j in range(i+1, len(axes)):
+    axes[j].axis('off')
 
 # Adjust layout
 plt.tight_layout()
 plt.show()
 ```
 
+The EU countries who have experienced the highest excess mortality figures in 2023 have all seen more than half of their population vaccinated by Pfizer or AstraZenica. 
+
+##### Bottom 5 Mean Excess Mortality 2023 First-Dose Vaccination Profiles
+
+```{python}
+# Function to prevent overcrowding of percentage labels 
+def custom_autopct(pct):
+   return '{:.1f}%'.format(pct) if pct > 0.1 else ''
+
+# Create subplots
+fig, axes = plt.subplots(2, 3, figsize=(20, 20))  
+# Flatten the axes array to allow for iteration
+axes = axes.flatten()  
+
+# Plot each pie chart
+for i, country in enumerate(bottom_5.index):
+    country_data = bottom_5.loc[country]
+    # Creating custom labels
+    labels = [label if value > 0.001 else '' for label, value in country_data.items()]
+    axes[i].pie(country_data, labels=labels, autopct=lambda pct: custom_autopct(pct))
+    axes[i].set_title(f'Vaccination Distribution in {country}')
+    axes[i].axis('equal')
+    
+
+# Hide unused subplots 
+for j in range(i+1, len(axes)):
+    axes[j].axis('off')
+
+# Adjust layout
+plt.tight_layout()
+plt.show()
+```
+
+The EU countries which have experienced the lowest excess mortality (all experienced negative excess mortality) in 2023 appear to have many more people unvaccinated than the top 5 countries. They also seem to have lower exposure to Pfizer and AstraZenica vaccines. The slight exception to this is Lithuania.
+
+<!-- #region -->
+##### Reviewing vaccine uptake
+
+
+As we delve into the vaccination data, we encounter a key question: why do the top 5 countries differ so much from the bottom 5 in terms of vaccine uptake? It could be downn to supply, demand or access to vaccines in general and specific vaccine types.
+
+One noticeable trend is that the countries with lower vaccine uptake seem to have weaker economies compared to those with higher uptake. This observation leads us to consider the financial aspects of the COVID-19 vaccine rollout. Since vaccines vary in cost and distributing them is a costly affair, it's plausible that financial constraints might influence the lower vaccine uptake in less wealthy countries. In contrast, wealthier countries might have had more resources to facilitate broader vaccine coverage.
+
+However, this observed pattern raises another possibility. While less affluent countries are showing a decrease in expected mortality rates, wealthier countries are experiencing an increase. This trend could be related to the vaccines themselves or might be influenced by other factors not yet explored.
+
+
+
+
+
+
+
+
+<!-- #endregion -->
+
 ### Conclusion
 
-- Areas for future research 
+Our data science project set out to explore the complex relationship between specific COVID-19 vaccines and excess all-cause mortality in EU countries in 2023. Utilising comprehensive datasets, which included excess mortality data from Eurostat and detailed COVID-19 vaccination data from the ECDC, we applied rigorous data cleaning, statistical analysis, and regression techniques to unveil trends and correlations.
 
+Our findings revealed a surprising correlation between the uptake of Pfizer and AstraZenica vaccines and increased all-cause excess mortality in certain EU countries. However, this observation was made without accounting for external factors, which could significantly influence these results. These highlighted factors included the strength of healthcare systems, age demographics, concurrent health crises like influenza rates, and other socioeconomic variables.
 
+To provide a more nuanced understanding, we took a surface level look into the commonalities of the data to try and explore more potential confounders. We examined vaccine distribution patterns and found that countries with higher excess mortality rates had a higher uptake of Pfizer and AstraZenica vaccines. Conversely, countries with lower or negative excess mortality rates had fewer vaccinations and lower exposure to these particular vaccines. This trend raised questions about the role of economic factors in vaccine distribution and their potential impact on mortality rates.
 
+In conclusion, our project highlights a tentative association between the uptake of Pfizer and AstraZeneca COVID-19 vaccines and mean 2023 excess mortality in the EU. However, it also underscores the complexity of this relationship and the potential influence of multiple other factors which were not included in our regression. Our findings should not be interpreted as a direct causal link but rather as an indication of areas that warrant further research.
 
+Going forward, a more comprehensive analysis, including multiple regression models with additional confounding variables, is required to explore the relationships between Covid-19 vaccines and excess mortality further. 
 
 
 # Reference list
