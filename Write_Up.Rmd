@@ -7,7 +7,7 @@ jupyter:
       extension: .Rmd
       format_name: rmarkdown
       format_version: '1.2'
-      jupytext_version: 1.16.0
+      jupytext_version: 1.15.2
   kernelspec:
     display_name: Python 3 (ipykernel)
     language: python
@@ -99,6 +99,7 @@ dirty_mortality.head()
 ```
 
 ```{python}
+# Remove GEO row
 drop_labels = dirty_mortality.drop(index= 0)
 ```
 
@@ -503,8 +504,7 @@ import merge
 vaccine_type = by_type_and_country['VaccineType'].drop_duplicates()
 
 
-```{python}
-
+#
 vaccine_dict = merge.merge_vaccines(by_type_and_country, country_and_mean, vaccine_type)
 
 ```
@@ -541,7 +541,7 @@ JAN_linregress = table_regress_type.loc['Janssen']
 
 ```{python}
 
-fig, axs = plt.subplots(2, 2, figsize=(10, 8))
+fig, axs = plt.subplots(2, 2, figsize=(10, 10))
 
 for x, y, country in zip(vaccine_dict['Astrazeneca']['% vaxed'],
                          vaccine_dict['Astrazeneca']['Mean 2023'],
@@ -626,24 +626,73 @@ permutation.permute('Pfizer', 'Astrazeneca', vaccine_dict)
 
 To speed up the process the above code only does 10,000 iterations. Running the above code the closer you get to 5000 the less significant the model is. The closer it is to 0 or 10,000 the better the level of significance. Among our data the relationship between mortality rates and vaccine rates is definitely not random as the number we get when comparing Phizer or Astrazeneca to any vaccine is 0.
 
-```{python}
+<!-- #region -->
+### Where are we now? 
+
+Based on our existing analysis we have observed a suprising relationship between the uptake of both the Pfizer and AstraZenica vaccines and all cause excess mortality in EU countries. 
+
+However, we have not considered for any external factors as yet in our analysis. We cannot be confident that other factors are not influencing our regression models as we haven't accounted for them. Indentifying these factors would help us in attempting to isolate the impact of vaccines from those factors.
+
+Such factors which could be influencing the results we are seeing are as follows: 
+
+- Strength of Countries' Healthcare Systems: Better healthcare could lead to lower mortality rates.
+- Age demographic of countries: Countries' with aging populations could tend towards certain vaccine types (for various reasons) which could make those vaccines appear to be influencing excess mortality. For example, countries with an aging population may be more affluent and opted for more expensive vaccines. 
+- Influenza Rates: If a country is also dealing with a flu outbreak, it could affect mortality rates.
+- Lockdown effects: Countries with stricter vaccination protocols seem likely to have had harsher lockdown restrictions. Strict lockdowns might have indirect health impacts, like increased alcohol consumption leading to more liver-related deaths (observed in the UK CITE)
 
 
-```
+It will also be useful to explore any commonalities between the groupings of countries. This may help us indentify any further or more specific factors to be aware of: Which countries had similar vaccine profiles? Do they have other common traits? 
+Common traits may come in the form of - 
+- Political and Social Stability: Events such as conflicts, social unrest, or political turmoil can disrupt healthcare systems and influence mortality rates.
+- Socioeconomic Factors: Variables such as national income, employment rates, and public health policies might have a substantial impact on both vaccination rates and mortality outcomes.
 
-```{python}
 
-```
+It would be beneficial to further investigate all of these factors and if possible include them in a multiple regression model alongside vaccination uptake by type. 
 
+<!-- #endregion -->
 
 ### Further interrogation of the results
 
-__Major limitations__ - look into potential known known confounders
-
-Age, flu, health service strain
+We will return to an initial histogram of mean excess all cause mortality to begin to investigate the impact external factors to our research could have had on our initial findings.
 
 
+```{python}
+plt.bar(x=excess_mortality.sort_values('Mean 2023').index, height=excess_mortality.sort_values('Mean 2023')['Mean 2023'])
+plt.xticks(rotation=90)
+plt.xlabel('Country')
+plt.ylabel('Mean Excess Mortality 2023')
+plt.title('Mean Excess Mortality 2023 by EU country')
+plt.show
+```
 
+##### Strength of Countries' Healthcare Systems:
+
+
+```{python}
+
+```
+
+##### Age demographic of countries
+
+```{python}
+
+```
+
+##### Influenza Rates
+
+```{python}
+
+```
+
+##### Adverse effects of lockdown
+
+Did certain countries lock down more than others? have they had more deaths?
+
+```{python}
+
+```
+
+### Exploring for commonalities
 
 __Explore Commonalities__ between similar groupings of countries. Which countries bought certain vaccines - are there any commonalities. 
 
@@ -707,7 +756,7 @@ just_eu
 ```
 
 ```{python}
-just_eu['Year'] = just_eu['Day'].str[6:]
+just_eu['Year'] = just_eu['Day'].str[:4]
 just_eu
 ```
 
@@ -718,7 +767,11 @@ just_eu_2023
 
 ```{python}
 mean_2023_mortality = just_eu_2023.groupby('Entity').agg({'p_proj_0_14':'mean', 'p_proj_15_64': 'mean', 'p_proj_65_74':'mean', 'p_proj_75_84':'mean', 'p_proj_85p':'mean','p_proj_all_ages':'mean'})
-pd.DataFrame(mean_2023_mortality.sort_values(by = 'p_proj_all_ages', ascending = False))
+mean_2023_mortality.sort_values(by = 'p_proj_all_ages', ascending = False)
+```
+
+```{python}
+mean_2023_mortality[['p_proj_75_84', 'p_proj_85p']]
 ```
 
 ### Conclusion
