@@ -19,7 +19,8 @@ jupyter:
       version_minor: 0
 ---
 
-# Investigating the relationship between specific Covid-19 vaccines and excess all-cause mortality in the EU in 2023
+# Investigating the relationship between specific COVID-19 vaccines excess all-cause mortality in the EU in 2023
+
 
 
 
@@ -37,7 +38,7 @@ import statsmodels.api as sm
 pd.set_option('mode.copy_on_write', True)
 ```
 
-Running the following line of code will fetch the vaccination data we will use in our project. Due to an issue of single-use download links for the excess mortality data, please refer to the README.md file for further instructions before proceeding with the rest of this notebook.
+Running the following line of code will fetch the vaccination data we will use in our project. Due to an issue of obtaining direct download links for the excess mortality data, please refer to the README.md file for further instructions before proceeding with the rest of this notebook.
 
 ```{python}
 #Importing our fetch data file 
@@ -46,11 +47,11 @@ import fetch_data
 
 ## Introduction 
 
-There is ongoing debate in public health discourse about the relationship between COVID-19 vaccinations and excess mortality in the post-pandemic era. This discussion has gained traction in light of various countries reporting unexpected excess mortality rates following widespread vaccine rollout. Contrasting interpretations of data by health authorities, researchers, and policymakers, leads to a complex mix of perspectives on the factors influencing recent trends of excess mortality. This controversy underscores the need for transparent analysis into whether COVID-19 vaccination campaigns have influenced population health outcomes.
+There is ongoing debate in public health discourse about the relationship between COVID-19 vaccinations and excess mortality in the post-pandemic era. This discussion has gained traction in light of various countries reporting unexpected excess mortality rates following widespread vaccine rollout. Contrasting interpretations of data by health authorities, researchers, and policymakers, leads to a complex mix of perspectives on the factors influencing recent trends of excess mortality. This controversy underscores the need for transparent analysis into the influence of COVID-19 vaccination administration on population health outcomes.
 
 This project seeks to explore whether there is an association between excess all-cause mortality seen across European Union (EU) countries post-Covid 19 pandemic and Covid-19 vaccination. Our investigation spans 30 countries, encompassing the 27 EU member states, along with Norway, Iceland, and Liechtenstein.
 
-Excess all-cause mortality, which measures the percentage deviation between observed and expected deaths from any cause in a given period, provides a  lens through which we can assess the macro level impacts of the pandemic and vaccination efforts. To explore the relationship between Covid-19 vaccination and excess all-cause mortality, we utilise linear regression as our primary analytical approach.
+Excess all-cause mortality, which measures the percentage difference between observed and expected deaths from any cause in a given period, provides a  lens through which we can assess the macro level impacts of the pandemic and vaccination efforts. To explore the relationship between Covid-19 vaccination and excess all-cause mortality, we utilise linear regression as our primary analytical approach.
 
 The inclusion of 30 European countries in our study provides a rich dataset that enables us to investigate potential links between different vaccination types and variations in excess all-cause mortality. This research seeks to uncover insights into the factors influencing post-pandemic mortality patterns.
 
@@ -701,6 +702,10 @@ plt.show
 ```
 
 ##### Age demographic of countries
+
+```{python}
+
+```
 
 ```{python}
 mortality_by_age = pd.read_csv('data/excess-mortality-p-scores-projected-baseline-by-age.csv')
