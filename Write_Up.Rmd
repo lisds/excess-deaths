@@ -679,8 +679,7 @@ It would be beneficial to further investigate all of these factors and if possib
 
 <!-- #endregion -->
 
-### Further interrogation of the results
-
+### Exploring other factors 
 We will return to an initial histogram of mean excess all cause mortality to begin to investigate the impact external factors to our research could have had on our initial findings.
 
 
@@ -704,20 +703,37 @@ plt.show
 ##### Age demographic of countries
 
 ```{python}
+mortality_by_age = pd.read_csv('data/excess-mortality-p-scores-projected-baseline-by-age.csv')
 
+just_eu = mortality_by_age[mortality_by_age['Entity'].isin(country_code_dict)]
 
+just_eu['Year'] = just_eu['Day'].str[:4]
+
+just_eu_2023 = just_eu[just_eu['Year'] == '2023']
+
+mean_2023_mortality = just_eu_2023.groupby('Entity').agg({'p_proj_0_14':'mean', 'p_proj_15_64': 'mean', 'p_proj_65_74':'mean', 'p_proj_75_84':'mean', 'p_proj_85p':'mean','p_proj_all_ages':'mean'})
+
+mean_by_age = pd.DataFrame(mean_2023_mortality.sort_values(by = 'p_proj_all_ages'))
+mean_by_age
+
+mean_2023_mortality.sort_values(by = 'p_proj_all_ages', ascending = False)
+```
 
 ##### Influenza Rates
 
+```{python}
+
+```
+
+<!-- #region -->
 
 
 ##### Adverse effects of lockdown
 
 Did certain countries lock down more than others? have they had more deaths?
 
-```{python}
 
-```
+<!-- #endregion -->
 
 ### Exploring for commonalities
 
@@ -769,40 +785,6 @@ for i, country in enumerate(ordered_pie_chart_data.index):
 # Adjust layout
 plt.tight_layout()
 plt.show()
-```
-
-```{python}
-mortality_by_age = pd.read_csv('data/excess-mortality-p-scores-projected-baseline-by-age.csv')
-mortality_by_age.head()
-```
-
-```{python}
-just_eu = mortality_by_age[mortality_by_age['Entity'].isin(country_code_dict)]
-just_eu
-```
-
-```{python}
-just_eu['Year'] = just_eu['Day'].str[:4]
-just_eu
-```
-
-```{python}
-just_eu_2023 = just_eu[just_eu['Year'] == '2023']
-just_eu_2023
-```
-
-```{python}
-mean_2023_mortality = just_eu_2023.groupby('Entity').agg({'p_proj_0_14':'mean', 'p_proj_15_64': 'mean', 'p_proj_65_74':'mean', 'p_proj_75_84':'mean', 'p_proj_85p':'mean','p_proj_all_ages':'mean'})
-
-mean_by_age = pd.DataFrame(mean_2023_mortality.sort_values(by = 'p_proj_all_ages'))
-mean_by_age
-
-mean_2023_mortality.sort_values(by = 'p_proj_all_ages', ascending = False)
-```
-
-```{python}
-mean_2023_mortality[['p_proj_75_84', 'p_proj_85p']]
-
 ```
 
 ### Conclusion
