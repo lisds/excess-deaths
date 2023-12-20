@@ -38,7 +38,7 @@ import statsmodels.api as sm
 pd.set_option('mode.copy_on_write', True)
 ```
 
-Running the following line of code will fetch the vaccination data we will use in our project. Due to an issue of obtaining direct download links for the excess mortality data, please refer to the README.md file for further instructions before proceeding with the rest of this notebook.
+Running the following line of code will fetch the vaccination data we will use in our project. Due to an issue of obtaining a direct download link for the excess mortality data, please refer to the README.md file for further instructions before proceeding with the rest of this notebook.
 
 ```{python}
 #Importing our fetch data file 
@@ -49,9 +49,7 @@ import fetch_data
 
 There is ongoing debate in public health discourse about the relationship between COVID-19 vaccinations and excess mortality in the post-pandemic era. This discussion has gained traction in light of various countries reporting unexpected excess mortality rates following widespread vaccine rollout. Contrasting interpretations of data by health authorities, researchers, and policymakers, leads to a complex mix of perspectives on the factors influencing recent trends of excess mortality. This controversy underscores the need for transparent analysis into the influence of COVID-19 vaccination administration on population health outcomes.
 
-This project seeks to explore whether there is an association between excess all-cause mortality seen across European Union (EU) countries post-Covid 19 pandemic and Covid-19 vaccination. Our investigation spans 30 countries, encompassing the 27 EU member states, along with Norway, Iceland, and Liechtenstein.
-
-Excess all-cause mortality, which measures the percentage difference between observed and expected deaths from any cause in a given period, provides a  lens through which we can assess the macro level impacts of the pandemic and vaccination efforts. To explore the relationship between Covid-19 vaccination and excess all-cause mortality, we utilise linear regression as our primary analytical approach.
+This project seeks to explore whether there is an association between excess all-cause mortality seen across European Union (EU) countries post-COVID 19 pandemic and COVID-19 vaccination. Our investigation spans 30 countries, encompassing the 27 EU member states, along with Norway, Iceland, and Liechtenstein. We utilise linear regression as our primary analytical approach.
 
 The inclusion of 30 European countries in our study provides a rich dataset that enables us to investigate potential links between different vaccination types and variations in excess all-cause mortality. This research seeks to uncover insights into the factors influencing post-pandemic mortality patterns.
 
@@ -65,9 +63,9 @@ The underlying causes of post-pandemic excess mortality remain a subject of deba
 
 The UK Department for Health and Social Care asserted that there was no evidence linking excess mortality to COVID-19 vaccines. The report has since been removed from the government website, but can still be accessed [here](https://dailysceptic.org/wp-content/uploads/2023/11/Final-Briefing-on-Excess-Deaths-24-October-2023.pdf). The report has many shortcomings. It considered all vaccine types homogenously and there were inconsistencies in reported data related on the number of unvaccinated individuals, monthly death figures, and age-standardized mortality rate calculations (Jefferson and Heneghan, 2023). 
 
-Vaccine safety concerns were initiated during the Covid-19 pandemic with the suspension of AstraZeneca's COVID-19 vaccine in several European countries due to concerns over rare blood clots (McGrail, 2021). The debate over vaccine safety has been further fueled by reports of side effects, such as elevated risks of myocarditis and pericarditis associated with mRNA vaccines, though the causal links remain unclear (Alami et al., 2023). A study by Aarstad and Kvitastein (2023) found a correlation between 2021 general vaccination uptake in Europe and increased 2022 all-cause mortality, they conclude that one percentage point increase in 2021 general vaccination uptake was associated with a 2022 monthly mortality increase of 0.105 percent. 
+Vaccine safety concerns were initiated during the COVID-19 pandemic with the suspension of AstraZeneca's COVID-19 vaccine in several European countries due to concerns over rare blood clots (McGrail, 2021). The debate over vaccine safety has been further fueled by reports of side effects, such as elevated risks of myocarditis and pericarditis associated with mRNA vaccines, though the causal links remain unclear (Alami et al., 2023). A study by Aarstad and Kvitastein (2023) found a correlation between 2021 general vaccination uptake in Europe and increased 2022 all-cause mortality, they conclude that one percentage point increase in 2021 general vaccination uptake was associated with a 2022 monthly mortality increase of 0.105 percent. 
 
-Contrarily, other factors have been suggested as contributors to the recent spike in excess deaths. These include increased incidences of flu, an aging European population, the lasting effects of Covid-19 (long Covid), and strained healthcare services leading to delayed treatments and diagnoses (McDonald, 2022).
+Contrarily, other factors have been suggested as contributors to the recent spike in excess deaths. These include increased incidences of flu, an aging European population, the lasting effects of COVID-19 (long COVID), and strained healthcare services leading to delayed treatments and diagnoses (McDonald, 2022).
 
 To develop the discourse on this debate it is necessary to explore an association between the uptake of individual vaccines and excess mortality. Given the varied excess mortality across Europe and the utilisation of different vaccine types, the European Union offers a rich dataset for exploring potential links between different COVID-19 vaccines and mortality rates. 
 
@@ -76,9 +74,9 @@ To develop the discourse on this debate it is necessary to explore an associatio
 
 Eurostat's excess mortality indicator is part of the European Statistical Recovery Dashboard and takes the number of people who died from any cause in a given period and compares it with a historical baseline from previous years. In the case of the dataset we will be using, this baseline consists of the average number of deaths that occurred each month during the period 2016-2019.  
 
-The term excess death refers to the absolute difference between the number of observed and expected deaths in a given period (CITE). To better enable comparisons across countries with large differences in population, this project investigates excess *mortality*, which refers to the percentage difference between the observed and expected number of deaths.
+The term excess death refers to the absolute difference between the number of observed and expected deaths in a given period (Caul, 2023). To better enable comparisons across countries with large differences in population, this project investigates excess *mortality*, which refers to the *percentage* difference between the observed and expected number of deaths.
 
-In particular, we will be looking at *all-cause* excess mortality, which refers to the percentage difference in the number of observed deaths from any cause in a given period, compared to the expected number of deaths from any cause in that given period.
+In particular, we will be looking at *all-cause* excess mortality, which refers to the percentage difference in the number of observed deaths from *any cause* in a given period, compared to the expected number of deaths from any cause in that given period.
 
 
 Therefore, when referring to excess mortality throughout this project, we will be referring to the percentage difference in additional deaths from any cause in comparison to the average monthly deaths in 2016-2019. The higher the value, the higher the number of additional deaths, with negative numbers indicating fewer deaths compared to the baseline period.
@@ -197,10 +195,8 @@ excess_mortality.head()
 
 Each row of the dataframe corresponds to a reporting country, and the values within each row correspond to that country's percentage difference in deaths from any cause in that month, in comparison to the average monthly deaths in 2016-2019.
 
-The following dataframe summarise the excess mortality data:
 
-
-And the following dataframe for Covid-19 vaccinations:
+We have obtained the following dataframe for COVID-19 vaccinations:
 
 ```{python}
 vaccine_data.head()
@@ -211,13 +207,13 @@ This dataframe gives you a matrix of age breakdown by dose, by week, per vaccine
 
 ### Preliminary Analysis
 
-We will begin with a preliminary analysis for 2023 to see whether the uptake of Covid-19 vaccines in general has a relationship with excess mortality across european countries. 
+We will begin with a preliminary analysis for 2023 to see whether the uptake of COVID-19 vaccines in general has a relationship with excess mortality across European countries. 
 
-In order to get an idea of excess mortality across Europe we have calculated a mean excess mortality for the 9 recorded months of 2023 for all EU countries and the EU as a whole. We chose to focus on excess mortality from the beginning of 2023 because the majority of COVID-19 vaccines were administered in 2021 and 2022. 
+In order to get an idea of excess mortality across Europe we have calculated mean excess mortality for the 9 recorded months of 2023 for EU countries. We chose to focus on excess mortality from the beginning of 2023 because the majority of COVID-19 vaccines were administered in 2021 and 2022. 
 
 Our initial regression mirrors the approach taken by Aarstad and Kvitastein (2023) in their recent paper which regressed all cause mortality in the first 9 months of 2022 on vaccination uptake (at the turn of 2022). We expand upon it since more first doses of vaccines having been administered in 2022, providing a larger set of data points.
 
-This provides a cutoff point for a 'fair' investigation - vaccination counts are counted up until 2023 and excess mortality mean is calculated from the beggining of 2023.
+This provides a cutoff point in attempt to 'fairly' test for a relationship - vaccination counts are counted up until 2023 and excess mortality mean is calculated from the beggining of 2023.
 
 ```{python}
 #Adding a year column
@@ -225,13 +221,6 @@ vaccine_data['Year'] = vaccine_data['YearWeekISO'].str[:4].str.strip()
 #Displaying counts of first vaccination dose by year
 vaccine_data.groupby('Year')['FirstDose'].sum()
 ```
-
-```{python}
-# Creating a dataframe to describe the data
-excess_mortality.describe()
-```
-
-This description shows us that around the fiftieth percentile most countries have a positive excess mortality and most means are positive as well. This is a glimpse into the underlying problem.
 
 ```{python}
 # Select only months for 2023
@@ -250,6 +239,8 @@ plt.show
 ```
 
 In the above plot we can see the breakdown of the mean excess mortality per country in 2023. It is interesting to note that with the exception of Lichtenstein the mean mortality is only below zero in Eastern Europe.
+
+We can also see that the majority of EU countries have experienced positive mean excess mortality in 2023.
 
 #### Inital regression of mean excess mortality against vaccination percentage for EU countries
 
