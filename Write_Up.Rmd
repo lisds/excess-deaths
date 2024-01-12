@@ -1,0 +1,873 @@
+---
+jupyter:
+  jupytext:
+    notebook_metadata_filter: all,-language_info
+    split_at_heading: true
+    text_representation:
+      extension: .Rmd
+      format_name: rmarkdown
+      format_version: '1.2'
+      jupytext_version: 1.15.2
+  kernelspec:
+    display_name: Python 3 (ipykernel)
+    language: python
+    name: python3
+  widgets:
+    application/vnd.jupyter.widget-state+json:
+      state: {}
+      version_major: 2
+      version_minor: 0
+---
+
+# Investigating the relationship between specific COVID-19 vaccines excess all-cause mortality in the EU in 2023
+
+
+
+
+
+
+```{python}
+#Importing necessary libraries 
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt 
+import scipy.stats as sps
+import statsmodels.api as sm
+
+# Safe setting for Pandas.  Needs Pandas version >= 1.5.
+pd.set_option('mode.copy_on_write', True)
+```
+
+Running the following line of code will fetch the vaccination data we will use in our project. Due to an issue of obtaining a direct download link for the excess mortality data, please refer to the README.md file for further instructions before proceeding with the rest of this notebook.
+
+```{python}
+#Importing our fetch data file 
+import fetch_data
+```
+
+## Introduction 
+
+There is ongoing debate in public health discourse about the relationship between COVID-19 vaccinations and excess mortality in the post-pandemic era. This discussion has gained traction in light of various countries reporting unexpected excess mortality rates following widespread vaccine rollout. Contrasting interpretations of data by health authorities, researchers, and policymakers, leads to a complex mix of perspectives on the factors influencing recent trends of excess mortality. This controversy underscores the need for transparent analysis into the influence of COVID-19 vaccination administration on population health outcomes.
+
+This project seeks to explore whether there is an association between excess all-cause mortality seen across European Union (EU) countries post-COVID 19 pandemic and COVID-19 vaccination. Our investigation spans 30 countries, encompassing the 27 EU member states, along with Norway, Iceland, and Liechtenstein. We utilise linear regression as our primary analytical approach.
+
+The inclusion of 30 European countries in our study provides a rich dataset that enables us to investigate potential links between different vaccination types and variations in excess all-cause mortality. This research seeks to uncover insights into the factors influencing post-pandemic mortality patterns.
+
+## Literature review
+
+Excess mortality following the COVID-19 pandemic has raised concerns globally. Various countries have reported significant deviations from expected mortality rates. Notably, the United States witnessed a substantial 5-12% weekly increase in all-cause excess mortality during the latter half of 2022 (CDC, 2023). Similarly, the United Kingdom experienced six consecutive quarters of excess mortality as of September 2023 (O'Dowd, 2023), and Australia recorded a 7% excess mortality in the first five months of 2023, although they attributed half of these deaths to COVID-19 (Adair, 2023). 
+
+Increased excess mortality in 2023 is considered particularly suprising since we have recently emerged from a pandemic during which, it would be expected that vulnerable populations have already passed away. The current state of affairs suggests an underwhelming response to this phemonea and a lack of proactive measures towards its investigation, motivating our exploration in this project.
+
+The underlying causes of post-pandemic excess mortality remain a subject of debate and investigation. In a UK parliamentary debate on October 20, 2023, former Tory MP Andrew Bridgen stated that COVID-19 vaccines were rushed through trials and therefore might be contributing to the observed increase in excess mortality. Bridgen criticised the Office for National Statistics (ONS) and the Medicine and Healthcare Products Regulatory Agency (MHRA) for mishandling data to promote a pro-vaccine agenda.
+
+The UK Department for Health and Social Care asserted that there was no evidence linking excess mortality to COVID-19 vaccines. The report has since been removed from the government website, but can still be accessed [here](https://dailysceptic.org/wp-content/uploads/2023/11/Final-Briefing-on-Excess-Deaths-24-October-2023.pdf). The report has many shortcomings. It considered all vaccine types homogenously and there were inconsistencies in reported data related on the number of unvaccinated individuals, monthly death figures, and age-standardized mortality rate calculations (Jefferson and Heneghan, 2023). 
+
+Vaccine safety concerns were initiated during the COVID-19 pandemic with the suspension of AstraZeneca's COVID-19 vaccine in several European countries due to concerns over rare blood clots (McGrail, 2021). The debate over vaccine safety has been further fueled by reports of side effects, such as elevated risks of myocarditis and pericarditis associated with mRNA vaccines, though the causal links remain unclear (Alami et al., 2023). A study by Aarstad and Kvitastein (2023) found a correlation between 2021 general vaccination uptake in Europe and increased 2022 all-cause mortality, they conclude that one percentage point increase in 2021 general vaccination uptake was associated with a 2022 monthly mortality increase of 0.105 percent. 
+
+Contrarily, other factors have been suggested as contributors to the recent spike in excess deaths. These include increased incidences of flu, an aging European population, the lasting effects of COVID-19 (long COVID), and strained healthcare services leading to delayed treatments and diagnoses (McDonald, 2022).
+
+To develop the discourse on this debate it is necessary to explore an association between the uptake of individual vaccines and excess mortality. Given the varied excess mortality across Europe and the utilisation of different vaccine types, the European Union offers a rich dataset for exploring potential links between different COVID-19 vaccines and mortality rates. 
+
+<!-- #region -->
+## Excess mortality data 
+
+Eurostat's excess mortality indicator is part of the European Statistical Recovery Dashboard and takes the number of people who died from any cause in a given period and compares it with a historical baseline from previous years. In the case of the dataset we will be using, this baseline consists of the average number of deaths that occurred each month during the period 2016-2019.  
+
+The term excess death refers to the absolute difference between the number of observed and expected deaths in a given period (Caul, 2023). To better enable comparisons across countries with large differences in population, this project investigates excess *mortality*, which refers to the *percentage* difference between the observed and expected number of deaths.
+
+In particular, we will be looking at *all-cause* excess mortality, which refers to the percentage difference in the number of observed deaths from *any cause* in a given period, compared to the expected number of deaths from any cause in that given period.
+
+
+Therefore, when referring to excess mortality throughout this project, we will be referring to the percentage difference in additional deaths from any cause in comparison to the average monthly deaths in 2016-2019. The higher the value, the higher the number of additional deaths, with negative numbers indicating fewer deaths compared to the baseline period.
+
+This excess mortality indicator is based on a data collection in which National Statistical Institutes from the European Union (EU) and the European Free Trade Association (EFTA) have transmitted weekly deaths data to Eurostat on a voluntary basis since April 2020. This weekly deaths dataset is then used to compute the monthly excess mortality indicator by mapping the deaths of each week to a full month. 
+
+The data covered in this analysis include all deaths that have occurred since January 2020 and up until September 2023. It is important to note that excess mortality has not been previously been recorded at the same scale as that during, and since, the Covid-19 pandemic. As a result, we are unaware of the general variance in trends of excess mortality, and so cannot assess this 'spike' against historical multidecadal variaton to determine its irregularity. This lack of data renders us unable to investigate the adequacy of the 2016-2019 baseline used by Eurostat, and acknowledge this as a limtiation of this report.
+<!-- #endregion -->
+
+#### Cleaning excess mortality data
+The data downloads and reads in an awkward format. The country column is labelled as 'TIME'. Each month excess mortality data point also comes with an adjacent column labelling whether it is confirmed data, provisional data or estimated data. Countries are also labelled with their full names. In order to work with the data, we had to complete some provisional cleaning which is detailed below.
+
+```{python}
+#Reading in initial excess mortality data
+dirty_mortality = pd.read_excel('data/excess_mortality.xlsx', sheet_name = 'Sheet 1', skiprows=7, skipfooter=6)
+dirty_mortality.head()
+```
+
+```{python}
+# Remove GEO row
+drop_labels = dirty_mortality.drop(index= 0)
+#drop_labels.head()
+```
+
+We need to remove any non-numerical data. This meant we had to first remove the columns which labelled the corresponding data point with NaN, p or ep (confirmed, provisional or estimated provisional). Examining the data you can see that most of the data in 2021 is confirmed with a few countries remaining provisional. Data for 2022 becomes majority provisional and data for 2023 is almost all provisional. There are only 4 estimated data points in the dataset and they are all for the latest recorded month of data - September 2023. 
+
+
+"Provisional data" implies a level of uncertainty or preliminary status, and it is used when reporting information that is subject to further verification or may undergo changes as more accurate and complete information becomes available.
+We acknowledge this as a potential limitation, that most of the 2023 data can be changed at the behest of the European Union. But we can at the very least be confident that these are in the majority of cases not estimates.
+
+```{python}
+# Remove columns labelling rates that are estimated or provisional data 
+only_numbers = drop_labels.loc[:, ~drop_labels.columns.str.startswith('Unnamed')]
+#only_numbers.head()
+```
+
+We then had to set the index as the country names, and relabelled the index 'Country'.
+
+```{python}
+# Set index as country names and change index title
+excess_mortality = only_numbers.set_index('TIME').rename_axis('Country')
+#excess_mortality.head()
+```
+
+The vaccine data (yet to be read in) refers to EU countries by country code, as oppose to country name as in this dataset. In order to merge the data later on in the project, we needed a common label for each country so that the relevant mortality data matches up to the relevant vaccination data. We chose to use country codes as they are shorter and therefore marginally easier to code with in data analysis.  
+
+```{python}
+# Creating dictionary to convert countries to corresponding country code
+country_code_dict = {
+    'Belgium': 'BE', 'Bulgaria': 'BG', 'Czechia': 'CZ', 'Denmark': 'DK', 'Germany': 'DE', 'Estonia': 'EE', 'Ireland': 'IE', 'Greece': 'GR', 
+    'Spain': 'ES', 'France': 'FR', 'Croatia': 'HR', 'Italy': 'IT', 'Cyprus': 'CY', 'Latvia': 'LV', 'Lithuania': 'LT', 'Luxembourg': 'LU', 
+    'Hungary': 'HU', 'Malta': 'MT', 'Netherlands': 'NL', 'Austria': 'AT', 'Poland': 'PL', 'Portugal': 'PT', 'Romania': 'RO', 'Slovenia': 'SI', 
+    'Slovakia': 'SK', 'Finland': 'FI', 'Sweden': 'SE', 'Iceland': 'IS', 'Liechtenstein': 'LI', 'Norway': 'NO', 'Switzerland': 'CH', 
+}
+#Adding a new column called 'ReportingCountry' with associated country codes
+excess_mortality['ReportingCountry'] = excess_mortality.index.map(country_code_dict)
+excess_mortality.head()
+```
+
+## Covid-19 Vaccination data
+
+
+Our data on Covid-19 vaccination comes from the European Centre for Disease Prevention and Control's Vaccine Tracker, and covers EU and EEA (European Economic Area) countries.
+
+The data is collected through The European Surveillance System (TESSy), and are submitted by European Union/European Economic Area countries to the ECDC once every four weeks. EU/EEA Member States report aggregated vaccination data by age and specific target groups, with doses reported by vaccine product.
+
+#### Cleaning vaccination data
+
+```{python}
+#Reading in initial vaccination data, may take up to 5 minutes.
+dirty_vaccine_data = pd.read_excel('data/vaccine_types.xlsx')
+dirty_vaccine_data.head()
+```
+
+There were many columns not relevant to our investigation, therefore we removed them.
+
+```{python}
+#Dropping unwanted columns
+cut_down_dvd = dirty_vaccine_data.drop(['Denominator', 'NumberDosesReceived', 'NumberDosesExported', 'FirstDoseRefused', 'DoseAdditional1', 'DoseAdditional2', 'DoseAdditional3', 'DoseAdditional4', 'DoseAdditional5', 'UnknownDose'], axis = 1)
+#cut_down_dvd.head()
+```
+
+Some countries listed both a total count and a count by region. The majority of countries only included a total vaccine count so we removed any counts by region.
+
+```{python}
+#Remove regions to only get full country
+no_regions = cut_down_dvd[cut_down_dvd['ReportingCountry'] == cut_down_dvd['Region']]
+#no_regions.head()
+```
+
+The data for some countries, including Finland, had duplicated rows for some weeks. To resolve this we removed any duplicate rows where the 'YearWeekISO', 'ReportingCountry', and 'FirstDose' column were all identical.
+
+```{python}
+#Drop duplicate rows
+vaccine_data = no_regions.drop_duplicates(subset = ['YearWeekISO', 'ReportingCountry', 'FirstDose'])
+vaccine_data.head()
+```
+
+Given there were duplicate counts due to the 'Region' column and duplicated rows, we also decided to check that there is no duplication or multiple counts of the same vaccine in the 'Vaccine' column denominating vaccine type. The breakdown of vaccines for the data set (https://www.ecdc.europa.eu/sites/default/files/documents/Variable_Dictionary_VaccineTracker-5-april-2023.pdf) provides info on each of the vaccines administered. 
+
+Some of the vaccines are adaptations of the general vaccine e.g. COM refers to the Pfizer BioNTech - Comirnaty whilst COMBA.4-5 refers to a variant of the COM vaccine targetting Original/Omicron BA.4/BA.5. Due to a large variety of countries in our dataset and each country having a varying approach to collecting data we end up with these sub-categories of vaccine variations such as COMBIV who's numbers are negligeable compared to the full Pfizer category "COM". We aknowledge this fact but we shall keep those subcategories in the vaccines list in case we find something unusual within the vaccine subcategories when regressed against excess mortality.
+
+```{python}
+# Display total number of first doses administered for each vaccine type
+vaccine_data.groupby('Vaccine')['FirstDose'].sum()
+```
+
+### Clean DataFrames
+
+
+After cleaning our data, we have obtained the following dataframe for excess mortality:
+
+```{python}
+excess_mortality.head()
+```
+
+Each row of the dataframe corresponds to a reporting country, and the values within each row correspond to that country's percentage difference in deaths from any cause in that month, in comparison to the average monthly deaths in 2016-2019.
+
+
+We have obtained the following dataframe for COVID-19 vaccinations:
+
+```{python}
+vaccine_data.head()
+```
+
+This dataframe gives you a matrix of age breakdown by dose, by week, per vaccine type, by country. Thus, every week has multiple rows each corresponding to different age categories and country groups corresponding to their vaccine type. 
+
+
+### Preliminary Analysis
+
+We will begin with a preliminary analysis for 2023 to see whether the uptake of COVID-19 vaccines in general has a relationship with excess mortality across European countries. 
+
+In order to get an idea of excess mortality across Europe we have calculated mean excess mortality for the 9 recorded months of 2023 for EU countries. We chose to focus on excess mortality from the beginning of 2023 because the majority of COVID-19 vaccines were administered in 2021 and 2022. 
+
+Our initial regression mirrors the approach taken by Aarstad and Kvitastein (2023) in their recent paper which regressed all cause mortality in the first 9 months of 2022 on vaccination uptake (at the turn of 2022). We expand upon it since more first doses of vaccines having been administered in 2022, providing a larger set of data points.
+
+This provides a cutoff point in attempt to 'fairly' test for a relationship - vaccination counts are counted up until 2023 and excess mortality mean is calculated from the beggining of 2023.
+
+```{python}
+#Adding a year column
+vaccine_data['Year'] = vaccine_data['YearWeekISO'].str[:4].str.strip()
+#Displaying counts of first vaccination dose by year
+vaccine_data.groupby('Year')['FirstDose'].sum()
+```
+
+```{python}
+# Select only months for 2023
+months_2023 = ['2023-01', '2023-02', '2023-03', '2023-04', '2023-05', '2023-06', '2023-07', '2023-08', '2023-09']
+
+# Add a mean excess all cause mortality by EU country for 2023 
+excess_mortality['Mean 2023'] = excess_mortality[months_2023].apply(pd.to_numeric, errors='coerce').mean(axis = 1)
+
+# Plot histogram of excess all cause mortality for 2023
+plt.bar(x=excess_mortality.sort_values('Mean 2023').index, height=excess_mortality.sort_values('Mean 2023')['Mean 2023'])
+plt.xticks(rotation=90)
+plt.xlabel('Country')
+plt.ylabel('Mean Excess Mortality 2023')
+plt.title('Mean Excess Mortality 2023 by EU country')
+plt.show
+```
+
+In the above plot we can see the breakdown of the mean excess mortality per country in 2023. It is interesting to note that with the exception of Lichtenstein the mean mortality is only below zero in Eastern Europe.
+
+We can also see that the majority of EU countries have experienced positive mean excess mortality in 2023.
+
+#### Inital regression of mean excess mortality against vaccination percentage for EU countries
+
+
+In order to account for varying population sizes, we used the percentage of vaccinated individuals in countries.
+
+The first dose column contains the number of first dose vaccines administered to individuals during the reporting week. We summed all of these values up until 2023, to get a total number of people in each country who had received a first dose of any type of vaccine. By selecting first dose only, we chose a binary categorisation: vaccinated or not.
+
+```{python}
+# Get series with count for total first dose vaccinations for each country up to start of 2023
+total_vaxed_up_to_23 = vaccine_data[vaccine_data['Year'] != '2023'][vaccine_data['TargetGroup'] == 'ALL'].groupby('ReportingCountry')['FirstDose'].sum()
+```
+
+We then needed to find the population of each country to convert this to a percentage. We took the population of each country to be the population as of week 1 in 2023. 
+
+```{python}
+#Taking the population for each country in as of the first week of 2023
+population_wk1_23 = vaccine_data[vaccine_data['YearWeekISO'] == '2023-W01'].groupby('ReportingCountry')['Population'].first()
+
+
+#Converting the number of people vaccinated into a proportion of the population
+percent_vaxed_wk1_23= total_vaxed_up_to_23/population_wk1_23 * 100
+
+```
+
+To run the regression we selected the mean 2023 and reporting country column from the excess mortality dataframe. We merged this with the 'percentage vaccinated' column to create a dataframe with the percentage vaccinated and the mean excess mortality in 2023 for each country. When doing this we were unable to preserve data for both the total EU and Switzerland as these were not available categories in the vaccine dataset. 
+
+```{python}
+# New dataframe with only ReportingCountry and Mean 2023 from excess mortality 
+country_and_mean = excess_mortality[['ReportingCountry', 'Mean 2023']]
+# Merge percentaged vaccinated into new merged dataframe
+merged = pd.merge(country_and_mean, pd.DataFrame(percent_vaxed_wk1_23), on = 'ReportingCountry').rename(columns ={0: '% Vaxed'})
+merged.head()
+```
+
+```{python}
+percent_vaxed_wk1_23
+merged['% Vaxed']
+```
+
+```{python}
+# Perform OLS regression
+regression = sps.linregress(merged['% Vaxed'], merged['Mean 2023'])
+
+# Create scatter plot
+plt.scatter(merged['% Vaxed'],merged['Mean 2023'])
+
+# Add country code data point labels
+for i in range(len(merged)):
+    plt.text(merged['% Vaxed'][i] + 1, merged['Mean 2023'][i], merged['ReportingCountry'][i], fontsize=8)
+
+# Plot labels and title and add line of best fit
+plt.xlabel('Percent Vaccinated as of 2023')
+plt.ylabel('Mean Excess Mortality 2023')
+plt.title(f"\n Vaccination uptake versus mean excess mortality\n$rvalue$ = {round(regression.rvalue,4)} \n$pvalue$ = {round(regression.pvalue,4)}")
+plt.plot(percent_vaxed_wk1_23, regression[1] + regression[0]*percent_vaxed_wk1_23, 'r')
+
+plt.show()
+```
+
+This initial linear regression plot yielded a correlation coefficient of 0.63, indicating a moderate positive correlation between the mean 2023 excess all-cause mortality and the percentage of the population that was vaccinated at the end of 2022. The positive correlation suggests that the higher a country's proportion of vaccinated individuals, the higher their levels of excess all-cause mortality. The gradient of the best fit line suggests that for every 1% incresase in vaccination uptake a 0.344% increase in excess mortaility is to be expected. A very small p-value of 0.0003 enables us to have high confidence that the observed correlation did not arise by chance from our null-model of no correlation.
+
+We will now investigate whether linear regression is an appropriate technique to investigate the relationship between percentage vaccinated pre 2023 and mean excess mortality in 2023.
+
+#### Residual error plot
+
+
+
+In order to verify whether linear regression is an appropriate technique to investigate the relationship between a country's percentage of vaccinated individals and its excess mortality, we decided to explore the residual errors from the above linear regression.
+
+
+The following plot demonstrates the residual error in terms of vertical distance between each data point and each fitted value.
+
+```{python}
+#A plot to demonstrate the actual values, predicted values and residual error
+import residual_plot
+residual_plot.plot_with_errors(merged['% Vaxed'], merged['Mean 2023'], regression.intercept, regression.slope)
+plt.xlabel('Percent Vaccinated as of 2023')
+plt.ylabel('Mean Excess Mortality 2023')
+plt.title('Residual Error Plot')
+```
+
+We used a residual vs fitted value plot to check whether the relationship between a country's percentage of vaccinated individals and its excess mortality is adequately captured by a linear model.
+
+```{python}
+# Checking for linearity
+predicted = regression.intercept + regression.slope * merged['% Vaxed']
+residual = merged['Mean 2023'] - predicted
+plt.scatter(x=predicted, y=residual, color='blue')
+plt.title('Residuals vs. Fitted Values Plot')
+plt.xlabel('Fitted Values')
+plt.ylabel('Residuals')
+# Add a horizontal line at y=0 for reference
+plt.axhline(y=0, color='red', linestyle='--', linewidth=1) 
+plt.show()
+```
+
+Ideally, the residuals should be scattered with no discernible pattern. As there doesn't appear to be an obvious pattern in how the residuals are distributed from left to right, we can be relatively confident of a linear relationship between the percentage of vaccinated individuals in a country and mean 2023 excess mortality.
+
+
+We then checked whether the assumption made by linear regression that the residual errors follow a normal distribution was correct, using a histogram plot. 
+
+```{python}
+#Plotting a histogram of the residual errors
+predicted = regression.intercept + regression.slope * merged['% Vaxed']
+plt.hist(residual)
+plt.xlabel('Residual error')
+plt.ylabel('Frequency')
+plt.title('Distribution of the residual errors')
+```
+
+This histogram does not help us much, as it does not look bell-shaped nor does it give us a good idea of what the distribution is. To further investigate the normality of the residuals, we plotted a Q-Q plot of the residuals.
+
+```{python}
+# Creating quartile-quartile plot
+sm.qqplot(residual, line='s')
+plt.title('Q-Q residual plot')
+plt.show()
+```
+
+Since, the majority of the residuals seem to fall along a straight line, with no significant systemic deviation we can infer that the residuals are approximately normally distributed.
+
+
+Finally, to check how the residuals vary with changes in the chosen regressor, we plotted a residual vs regressor plot for each regressor.
+
+```{python}
+# Create Residuals vs Vaccination regressor values plot
+plt.scatter(merged['% Vaxed'], residual)
+plt.axhline(y=0, color='red', linestyle='--', linewidth=1)  # Reference line
+plt.xlabel('Regressor Values')
+plt.ylabel('Residuals')
+plt.title('Residuals vs. Regressor Values Plot (for vaccination regressor)')
+plt.show()
+```
+
+```{python}
+# Create Residuals vs Mortality regressor values plot
+plt.scatter(merged['Mean 2023'] , residual)
+plt.axhline(y=0, color='red', linestyle='--', linewidth=1)  # Reference line
+plt.xlabel('Regressor Values')
+plt.ylabel('Residuals')
+plt.title('Residuals vs. Regressor Values Plot (for mortality regressor)')
+plt.show()
+```
+
+The second of these regression plots looks slightly abnormal in that there seems to be a pattern in the distribution of the residuals. Due to time contraints, we will be sticking to linear regression however further research into whether non-linear models could be more appropriate to model the relationship is recommended. As well as a thorough verification of the confidence of our linear regression such as a permutation test, in case the p-value is influenced by potential non-linearity.
+
+##### Assumptions/limitations
+
+Our current assumptions an limitations start with the cut off of vaccinations at the first week of 2023 while taking mortality from the start of 2023 onwards. This may limit any overlapping relationships. Alos, using the mean mortality across 2023 may flatten seasonal behaviours of mortality. Lastly, just focusing on first doses may limit the scope of the vaccine's impact on health.
+
+We now know that there is a correlation but the question is whether vaccination rate directly impacted excess mortality - thus it is important to look into confounding variables.
+
+## Regression of mean excess mortality against vaccination percentage for EU countries by vaccination type
+
+
+So far, we have only investigated whether there is a relationship between the percentage of vaccinated individuals and 2023 excess mortality across EU countries. We have only explored this in terms of vaccination *by any* Covid-19 vaccine. 
+
+Our vaccination data includes the weekly number of first doses by each vaccination type (for each country). Different vaccine manufacturers produce different kinds of vaccines. Pfizer-BioTech and Moderna are both mRNA vaccines, which are are supposedly linked to an increased number of cardiac incidents (Paknahad et.al, 2023). Both the Oxford Astrazeneca and Janssen (Johnson and Johnson) vaccines are viral vector vaccines. It is resonable to suggest that each vaccine type could have a different impact on the health of individuals, and therefore excess mortality.
+
+We  investigated the relationship between excess mortality and vaccine by manufacturer. We used the same mean excess mortality figure from our first regresssion.
+
+We first created a dataframe containing the number of first doses administered up until 2023, grouped by both type and country simultaneously. 
+
+```{python}
+# First doses administered count by vaccine type and country
+by_type_and_country = vaccine_data[(vaccine_data['Year'] != '2023') & (vaccine_data['TargetGroup'] == 'ALL')].groupby(['ReportingCountry','Vaccine'])['FirstDose'].sum()
+by_type_and_country = by_type_and_country.reset_index()
+by_type_and_country.head()
+```
+
+
+We then added the population count from week 1 which we used to get the % vaccinated broken down by each type of vaccine.
+
+```{python}
+# Add country population column
+by_type_and_country = pd.merge(by_type_and_country, population_wk1_23, on = 'ReportingCountry')
+#by_type_and_country.head()
+```
+
+```{python}
+# Add columnn denoting percentage of population vaccinated by specific vaccination types 
+by_type_and_country['% vaxed'] = by_type_and_country['FirstDose'] / by_type_and_country['Population']
+#by_type_and_country.head()
+```
+
+We also set aside the excess mortality mean with the reporting country column in preparation to bring all the data together.
+
+```{python}
+#
+just_means = excess_mortality[['Mean 2023', 'ReportingCountry']]
+#just_means.head()
+```
+
+To make the vaccine names more comprehensible we renamed them according to the full vaccine names. That information came with the dataset in a separate file.
+
+```{python}
+# Dictionary to rename vaccines with their full names
+vaccine_rename = {
+    'AZ' : 'Astrazeneca',
+    'COM' : 'Pfizer',
+    'COMBA.1' : 'PfizerBA1',
+    'COMBA.4-5' : 'PfizerBA4_5',
+    'JANSS' : 'Janssen',
+    'MOD' : 'Moderna',
+    'MODBA.1' : 'ModernaBA1',
+    'MODBBA.4-5' : 'ModernaBA4_5',
+    'NVXD' : 'Novavax',
+    'UNK' : 'Unknown',
+    'VLA' : 'Valneva',
+    'SPU' : 'Sputnik',
+    'COMBIV' : 'PfizerBA1_4_5',
+    'MODBIV' : 'ModernaBA1_4_5',
+    'BECNBG' : 'BeijingCNBG',
+    'SGSK' : 'SanofiGSK',
+    'BHACOV' : 'BharatCovaxin',
+    'SIN' : 'SinoVac'
+}
+# Add column with full vaccine name 
+by_type_and_country['VaccineType'] = by_type_and_country['Vaccine'].replace(vaccine_rename)
+#by_type_and_country
+```
+
+```{python}
+
+# Import .py file which performs linear regression for each type of vaccine by uptake against excess mortality in EU countries
+by_type_and_country[['VaccineType']].head()
+
+```
+
+We used our own function 'merge_vaccines' to automatically merge all the data into a dictionnary where each key is a vaccine type and each value is a corresponding dataset with the country name, percent vaxed and the country's excess mortality mean.
+
+```{python}
+#import merge function
+import merge
+
+#create  list of all vaccine types
+vaccine_type = by_type_and_country['VaccineType'].drop_duplicates()
+
+
+#create dictionary with vaccine types as keys
+
+vaccine_dict = merge.merge_vaccines(by_type_and_country, country_and_mean, vaccine_type)
+#vaccine_dict.head()
+```
+
+Now this dictionary can easily be fed into another function that produces a table with the slope, p-value and r-value for each vaccine type obtained by calulating the linear regression against the excess mortality mean. Due to limited values in some vaccines we removed certain vaccines from the process.
+
+```{python}
+
+# Import .py file which performs linear regression for each type of vaccine by uptake against excess mortality in EU countries
+
+import regression_type
+#create a table from the vaccine type dict with the regression p,r, slope and intercept values
+table_regress_type = regression_type.linregress_table(vaccine_dict)
+table_regress_type.apply(lambda s: s.apply('{0:.5f}'.format))
+#create a dataframe of the total number of first doses administered by type 
+count_by_type =pd.DataFrame(by_type_and_country.groupby('VaccineType')['FirstDose'].sum())
+#merge the two to add a column called first dose to the linregress table
+pd.merge(table_regress_type, count_by_type,left_index = True, right_index = True).sort_values('FirstDose', ascending = False)
+```
+
+
+We can now plot the values for each type of vaccine.
+
+```{python}
+#import plotting function
+import plot1
+
+
+#plot graphs for all vaccine types, percentage vaccination is the x axis, Mean exces death 2023 is the y axis. 
+plot1.plot_vax(vaccine_dict, '% vaxed', 'Mean 2023')
+```
+
+The only vaccine types with suffcient data to merit further inspection are the 4 most uptaken vaccines (Pfizer, Moderna, Astrazenica and Janssen) as you can see from the scale of the x axes on all of the plots.  
+
+```{python}
+
+#store the desired rows in the linregress table as their own variable
+
+AZ_linregress = table_regress_type.loc['Astrazeneca']
+MOD_linregress = table_regress_type.loc['Moderna']
+PF_linregress = table_regress_type.loc['Pfizer']
+JAN_linregress = table_regress_type.loc['Janssen']
+```
+
+```{python}
+
+#create a 2x2 subplot 
+fig, axs = plt.subplots(2, 2, figsize=(10, 10))
+
+
+#create a scatter plot for vaccine, points are labeled with country code 
+for x, y, country in zip(vaccine_dict['Astrazeneca']['% vaxed'],
+                         vaccine_dict['Astrazeneca']['Mean 2023'],
+                         vaccine_dict['Astrazeneca']['ReportingCountry']):
+    axs[0, 0].scatter(x, y)
+    axs[0, 0].text(x, y, country, fontsize=8, ha='right', va='bottom')
+    axs[0, 0].set_title(f"\n Astrazeneca \n$rvalue$ = {round(AZ_linregress['r-value'],4)} \n$pvalue$ = {round(AZ_linregress['p-value'],4)}")
+    #add a regression line
+    axs[0, 0].plot(vaccine_dict['Astrazeneca']['% vaxed'], AZ_linregress['intercept'] + AZ_linregress['slope'] * vaccine_dict['Astrazeneca']['% vaxed'], 'r')
+
+for x, y, country in zip(vaccine_dict['Moderna']['% vaxed'],
+                         vaccine_dict['Moderna']['Mean 2023'],
+                         vaccine_dict['Moderna']['ReportingCountry']):
+    axs[0, 1].scatter(x, y)
+    axs[0, 1].text(x, y, country, fontsize=8, ha='right', va='bottom')  
+    axs[0, 1].set_title(f"\n Moderna \n$rvalue$ = {round(MOD_linregress['r-value'],4)} \n$pvalue$ = {round(MOD_linregress['p-value'],4)}")
+    axs[0, 1].plot(vaccine_dict['Moderna']['% vaxed'], MOD_linregress['intercept'] + MOD_linregress['slope'] * vaccine_dict['Moderna']['% vaxed'], 'r')
+
+for x, y, country in zip(vaccine_dict['Pfizer']['% vaxed'],
+                         vaccine_dict['Pfizer']['Mean 2023'],
+                         vaccine_dict['Pfizer']['ReportingCountry']):
+    axs[1, 0].scatter(x, y)
+    axs[1, 0].text(x, y, country, fontsize=8, ha='right', va='bottom')  # Adjust fontsize and position as needed
+    axs[1, 0].set_title(f"\n Pfizer \n$rvalue$ = {round(PF_linregress['r-value'],4)} \n$pvalue$ = {round(PF_linregress['p-value'],4)}")
+    axs[1, 0].plot(vaccine_dict['Pfizer']['% vaxed'], PF_linregress['intercept'] + PF_linregress['slope'] * vaccine_dict['Pfizer']['% vaxed'], 'r')
+
+for x, y, country in zip(vaccine_dict['Janssen']['% vaxed'],
+                         vaccine_dict['Janssen']['Mean 2023'],
+                         vaccine_dict['Janssen']['ReportingCountry']):
+    axs[1, 1].scatter(x, y)
+    axs[1, 1].text(x, y, country, fontsize=8, ha='right', va='bottom')  # Adjust fontsize and position as needed
+    axs[1, 1].set_title(f"\n Janssen \n$rvalue$ = {round(JAN_linregress['r-value'],4)} \n$pvalue$ = {round(JAN_linregress['p-value'],4)}")
+    axs[1, 1].plot(vaccine_dict['Janssen']['% vaxed'], JAN_linregress['intercept'] + JAN_linregress['slope'] * vaccine_dict['Janssen']['% vaxed'], 'r')
+    
+    
+for ax in axs.flat:
+
+    ax.set(xlabel='Percentage vaccinated as of 2023', ylabel='Mean Excess Mortality 2023')
+
+
+plt.tight_layout() 
+
+
+plt.show()
+```
+
+The proportion of the population vaccinated with both Astrazeneca and Pfizer vaccines at the end of 2022, appears to have medium positive correlation with excess mortality in 2023. They have r values of 0.5663 and 0.583 respectively. The low p values of these plots show that they are statistically surprising and are worth looking into in more detail.  
+
+The Janssen plot has a p-value of 0.33 and therefore we cannot make any conclusions as to the nature of the relationship between Janssen vaccination uptake and excess mortality in 2023. 
+
+The moderna plot inlcudes an outlier in Lichenstein. We decided to remove this anomalous result to see if that changes the outcome.  
+
+```{python}
+#pull out moderna data that doesn't include LI values
+no_LI = vaccine_dict['Moderna'][vaccine_dict['Moderna']['ReportingCountry'] != 'LI']
+no_LI_regression = sps.linregress(no_LI['% vaxed'], no_LI['Mean 2023'])
+
+#plot a scatter graph with linear regression line
+plt.scatter(no_LI['% vaxed'], no_LI['Mean 2023'])
+for i in range(len(no_LI)):
+    plt.text(no_LI['% vaxed'].iloc[i], no_LI['Mean 2023'].iloc[i], no_LI['ReportingCountry'].iloc[i])
+plt.xlabel('Percentage vaccinated as of 2023')
+plt.ylabel('Excess mortality 2023')
+plt.plot(no_LI['% vaxed'], no_LI_regression[1] + no_LI_regression[0]*no_LI['% vaxed'], 'r', label='fitted line')
+plt.title(f"\n Moderna plot without Lichenstein\n$rvalue$ = {round(no_LI_regression.rvalue,4)} \n$pvalue$ = {round(no_LI_regression.pvalue,4)}")
+```
+
+Even after removing this outlier the p-value still remains at 0.2826. Again no conclusion can be made as to the nature of the relationship moderna vaccine and excess mortality in 2023.
+
+
+After looking at the Astrazeneca plot we noticed that Malta looked as though it could  be an outlier which was potentially largely responsible for the correlation, therefore we re-plotted the Astrazeneca linear regression omitting Malta. 
+
+```{python}
+#Replotting Astrazeneca linear regression but omitting Malta
+no_MT = vaccine_dict['Astrazeneca'][vaccine_dict['Astrazeneca']['ReportingCountry'] != 'MT']
+no_MT_regression = sps.linregress(no_MT['% vaxed'], no_MT['Mean 2023'])
+
+plt.scatter(no_MT['% vaxed'], no_MT['Mean 2023'])
+for i in range(len(no_MT)):
+    plt.text(no_MT['% vaxed'].iloc[i], no_MT['Mean 2023'].iloc[i], no_MT['ReportingCountry'].iloc[i])
+plt.xlabel('Percentage vaccinated as of 2023')
+plt.ylabel('Excess mortality 2023')
+plt.plot(no_MT['% vaxed'], no_MT_regression[1] + no_MT_regression[0]*no_MT['% vaxed'], 'r', label='fitted line')
+plt.title(f"\n Astrazeneca plot without Malta\n$rvalue$ = {round(no_MT_regression.rvalue,4)} \n$pvalue$ = {round(no_MT_regression.pvalue,4)}")
+```
+
+After removing Malta, a moderate positive correlation remains between the percentage of individuals vaccinated with Astrazeneca as of 2023, and the mean excess mortality in 2023. Furthermore, although the p-value increases from 0.0021 to 0.0143 with the omission of Malta, the results can still be considered statistically suprising using a 0.05 significance level.
+
+
+After recognising the small populations of Lichenstein and Malta we then considered dropping countries with very small populations and replotting our analysis. However, after re-assessing the populations, we decided to abandon this approach since a steadily increasing population meant the lack of an obvious cut off point, therefore we could not justify eliminating countries before a certain population size.
+
+```{python}
+population_wk1_23.sort_values().head(10)
+```
+
+### Permutation test
+
+The p-values and r-values from the linregress function assume linearity and independence of the given variables. Unfortunately, due to the highly interconnected value of mortality which can be affected by a variety of factors and the fact that the vaccination rate itself is affected by death rates it is un-wise to take these assumption as fact.
+
+Instead we chose to use the permutation test. A method that shuffles one column of variables between two different types of vaccines and then takes the slope for each new null world vaccine substracts them and compares the given difference to the real world slope difference. It does this thousands of times and tells you how far the real world data is from a null world hypothesis. Essentially, in worlds where the relationship between vaccine rates and mortality rates is random how many times would you find the real world value?
+
+In our case between Astrazeneca and Pfizer the data is so unlikely that among a million trials their difference never shows up. This means that the model we’ve made is extremely significant.
+
+```{python}
+#import permutaion function
+import permutation
+permutation.permute('Pfizer', 'Astrazeneca', vaccine_dict)
+```
+To speed up the process the above code only does 10,000 iterations. Running the above code the closer you get to 5000 the less significant the model is. The closer it is to 0 or 10,000 the better the level of significance. Among our data the relationship between mortality rates and vaccine rates is definitely not random as the number we get when comparing Phizer or Astrazeneca to any vaccine is 0.
+
+
+Despite the confidence we have gained from our permutation test. Analysis this far has not taken into account other confounding variables that may have had an impact on 2023 mean excess death. 
+
+<!-- #region -->
+### Where are we now? 
+
+Based on our existing analysis we have observed a suprising relationship between the uptake of both the Pfizer and AstraZenica vaccines and all cause excess mortality in EU countries. 
+
+However, we have not considered yet for any external factors in our analysis. We cannot be confident that other factors are not influencing our regression model as we haven't accounted for them. Indentifying these factors would help us in attempting to isolate the impact of vaccines over and above those factors.
+
+Such factors which could be influencing the results we are seeing are as follows: 
+
+- Age demographic of countries: Ageing populations could be leading to higher mortality rates.
+- Strength of Countries' Healthcare Systems: Weaker healthcare systems could be a factor in higher mortality rates.
+- Influenza Rates: If a country is also dealing with a flu outbreak, it could affect mortality rates.
+- Lockdown effects: Countries with stricter vaccination protocols may have had harsher lockdown restrictions. Stricter lockdowns might have adverse health impacts. For instance, increased alcohol consumption could be leading to more liver-related deaths in the UK (CITE).
+
+
+It will also be useful to explore any commonalities between the groupings of countries. This may help us indentify any further  factors to be aware of. An important question to consider is - which countries had similar vaccine profiles and do they have other common traits? 
+
+Potential common traits could include:
+- Political and Social Stability: Events such as conflicts, social unrest, or political turmoil can disrupt healthcare systems and influence mortality rates.
+- Socioeconomic Factors: Variables such as national income, employment rates, and public health policies might have a substantial impact on both vaccination rates and mortality outcomes.
+- Demographic Factors: Countries' with aging populations could tend towards certain vaccine types (for various reasons) which could make those vaccines appear to be influencing excess mortality. For example, countries with an aging population may be more affluent and opted for more expensive vaccines. 
+
+
+It would be beneficial to further investigate all of these factors and if possible include them in a multiple regression model alongside vaccination uptake by type. 
+
+<!-- #endregion -->
+
+### Exploring other factors
+
+We will now explore for data on influencing factors to include any relevant data into a multiple regression.
+
+##### Age demographic of countries
+
+In order to determine whether aging populations are playing a role in post-pandemic observed excess mortality we would look at population demographics to determine the presence of aging populations across EU countries. The best data we have found in limited time to represent this is the median age of the female popluation of EU countries.
+
+```{python}
+female_median = pd.read_excel('data/female_median_age.xlsx', sheet_name = 'Sheet 1', skiprows=7, skipfooter=6)
+desired_rows = female_median[['TIME', '2022']]
+our_countries = desired_rows[desired_rows['TIME'].isin(country_code_dict)]
+our_countries.head()
+```
+
+To investigate this further we would like to investigate how excess mortality varies across age groups. It would be revealing to look into which age groups are most influencing the excess mortality figures we have been exploring.
+
+Unfortunately our existing Eurostat data does not break down excess mortality by age group - so we have had to look for data elsewhere. The data we have found is printed below and looks suspicious with some seemingly unfeasible excess mortality figures e.g. Iceland 0-14.
+
+```{python}
+
+```
+
+```{python}
+mortality_by_age = pd.read_csv('data/excess-mortality-p-scores-projected-baseline-by-age.csv')
+
+just_eu = mortality_by_age[mortality_by_age['Entity'].isin(country_code_dict)]
+
+just_eu['Year'] = just_eu['Day'].str[:4]
+
+just_eu_2023 = just_eu[just_eu['Year'] == '2023']
+
+mean_2023_mortality = just_eu_2023.groupby('Entity').agg({'p_proj_0_14':'mean', 'p_proj_15_64': 'mean', 'p_proj_65_74':'mean', 'p_proj_75_84':'mean', 'p_proj_85p':'mean','p_proj_all_ages':'mean'})
+
+mean_by_age = pd.DataFrame(mean_2023_mortality.sort_values(by = 'p_proj_all_ages'))
+mean_by_age
+
+mean_2023_mortality.sort_values(by = 'p_proj_all_ages', ascending = False).head()
+```
+
+##### Strength of Countries' Healthcare Systems, Influenza Rates and Lockdown Effects
+
+The EU scope and recent timeframe of our project has made finding data to represent these factors difficult. For each of these titled factors we could not find any up to date data.
+
+
+### Exploring for commonalities
+
+We will now take a general look at the EU countries we have been using to investigate a potential link between certain COVID-19 vaccines and excess mortality. 
+
+We will try and expose any common traits between countries with similar mortality statistics or vaccine profiles to try and unearth any underlying factors.
+
+
+First we will return to our initial bar plot representing the mean excess mortality for EU countries in 2023.   
+
+We can see the top 5 countries exhibiting excess mortality are: Malta, Ireland, Iceland, Netherlands & Cyprus. Whilst Romania, Bulgaria, Lithuania, Latvia and Liechtenstein make up the bottom five countries and are all displaying a decrease in mortality from the expected baseline
+
+```{python}
+plt.bar(x=excess_mortality.sort_values('Mean 2023').index, height=excess_mortality.sort_values('Mean 2023')['Mean 2023'])
+plt.xticks(rotation=90)
+plt.xlabel('Country')
+plt.ylabel('Mean Excess Mortality 2023')
+plt.title('Mean Excess Mortality 2023 by EU country')
+plt.show
+```
+
+Let's now have a look at the vaccine profiles of the top and bottom 5 countries for mean excess mortality in 2023. 
+
+```{python}
+# Calculate the unvaccinated proportion
+by_type_and_country['Unvaccinated'] = 1 - by_type_and_country.groupby('ReportingCountry')['% vaxed'].transform('sum')
+
+# Prepare pie chart data
+pie_chart_data = by_type_and_country.pivot_table(index='ReportingCountry', columns='VaccineType', values='% vaxed', fill_value=0)
+pie_chart_data['Unvaccinated'] = by_type_and_country.groupby('ReportingCountry')['Unvaccinated'].first()
+
+# Create an array to order countries by their observed mean excess mortality 2023
+order_array = excess_mortality.sort_values('Mean 2023')['ReportingCountry'].values
+
+# Filter array for only values in pie_chart_data
+filtered_array = order_array[pd.Series(order_array).isin(pie_chart_data.index)].tolist()
+
+# Order pie chart data by excess mortality observed 2023 low > high
+ordered_pie_chart_data = pie_chart_data.reindex(filtered_array)
+
+# Top and bottom 5 for plots
+top_5 = ordered_pie_chart_data.tail(5)
+
+bottom_5 = ordered_pie_chart_data.head(5)
+```
+
+##### Top 5 Mean Excess Mortality 2023 First-Dose Vaccination Profiles 
+
+```{python}
+# Function to prevent overcrowding of percentage labels 
+def custom_autopct(pct):
+   return '{:.1f}%'.format(pct) if pct > 0.1 else ''
+
+# Create subplots
+fig, axes = plt.subplots(2, 3, figsize=(20, 20))  
+# Flatten the axes array to allow for iteration
+axes = axes.flatten()  
+
+# Plot each pie chart
+for i, country in enumerate(top_5.index):
+    country_data = top_5.loc[country]
+    # Creating custom labels
+    labels = [label if value > 0.001 else '' for label, value in country_data.items()]
+    axes[i].pie(country_data, labels=labels, autopct=lambda pct: custom_autopct(pct))
+    axes[i].set_title(f'Vaccination Distribution in {country}')
+    axes[i].axis('equal')
+    
+
+# Hide unused subplots 
+for j in range(i+1, len(axes)):
+    axes[j].axis('off')
+
+# Adjust layout
+plt.tight_layout()
+plt.show()
+```
+
+The EU countries who have experienced the highest excess mortality figures in 2023 have all seen more than half of their population vaccinated by Pfizer or AstraZenica. 
+
+##### Bottom 5 Mean Excess Mortality 2023 First-Dose Vaccination Profiles
+
+```{python}
+# Function to prevent overcrowding of percentage labels 
+def custom_autopct(pct):
+   return '{:.1f}%'.format(pct) if pct > 0.1 else ''
+
+# Create subplots
+fig, axes = plt.subplots(2, 3, figsize=(20, 20))  
+# Flatten the axes array to allow for iteration
+axes = axes.flatten()  
+
+# Plot each pie chart
+for i, country in enumerate(bottom_5.index):
+    country_data = bottom_5.loc[country]
+    # Creating custom labels
+    labels = [label if value > 0.001 else '' for label, value in country_data.items()]
+    axes[i].pie(country_data, labels=labels, autopct=lambda pct: custom_autopct(pct))
+    axes[i].set_title(f'Vaccination Distribution in {country}')
+    axes[i].axis('equal')
+    
+
+# Hide unused subplots 
+for j in range(i+1, len(axes)):
+    axes[j].axis('off')
+
+# Adjust layout
+plt.tight_layout()
+plt.show()
+```
+
+The EU countries which have experienced the lowest excess mortality (all experienced negative excess mortality) in 2023 appear to have many more people unvaccinated than the top 5 countries. They also seem to have lower exposure to Pfizer and AstraZenica vaccines. The slight exception to this is Lithuania.
+
+<!-- #region -->
+##### Reviewing vaccine uptake
+
+
+As we delve into the vaccination data, we encounter a key question: why do the top 5 countries differ so much from the bottom 5 in terms of vaccine uptake? It could be downn to supply, demand or access to vaccines in general and specific vaccine types.
+
+One noticeable trend is that the countries with lower vaccine uptake seem to have weaker economies compared to those with higher uptake. This observation leads us to consider the financial aspects of the COVID-19 vaccine rollout. Since vaccines vary in cost and distributing them is a costly affair, it's plausible that financial constraints might influence the lower vaccine uptake in less wealthy countries. In contrast, wealthier countries might have had more resources to facilitate broader vaccine coverage.
+
+However, this observed pattern raises another possibility. While less affluent countries are showing a decrease in expected mortality rates, wealthier countries are experiencing an increase. This trend could be related to the vaccines themselves or might be influenced by other factors not yet explored.
+
+
+
+
+
+
+
+
+<!-- #endregion -->
+
+### Conclusion
+
+Our data science project set out to explore the complex relationship between specific COVID-19 vaccines and excess all-cause mortality in EU countries in 2023. Utilising comprehensive datasets, which included excess mortality data from Eurostat and detailed COVID-19 vaccination data from the ECDC, we applied rigorous data cleaning, statistical analysis, and regression techniques to unveil trends and correlations.
+
+Our findings revealed a surprising correlation between the uptake of Pfizer and AstraZenica vaccines and increased all-cause excess mortality in certain EU countries. However, this observation was made without accounting for external factors, which could significantly influence these results. These highlighted factors included the strength of healthcare systems, age demographics, concurrent health crises like influenza rates, and other socioeconomic variables.
+
+To provide a more nuanced understanding, we took a surface level look into the commonalities of the data to try and explore more potential confounders. We examined vaccine distribution patterns and found that countries with higher excess mortality rates had a higher uptake of Pfizer and AstraZenica vaccines. Conversely, countries with lower or negative excess mortality rates had fewer vaccinations and lower exposure to these particular vaccines. This trend raised questions about the role of economic factors in vaccine distribution and their potential impact on mortality rates.
+
+In conclusion, our project highlights a tentative association between the uptake of Pfizer and AstraZeneca COVID-19 vaccines and mean 2023 excess mortality in the EU. However, it also underscores the complexity of this relationship and the potential influence of multiple other factors which were not included in our regression. Our findings should not be interpreted as a direct causal link but rather as an indication of areas that warrant further research.
+
+Going forward, a more comprehensive analysis, including multiple regression models with additional confounding variables, is required to explore the relationships between Covid-19 vaccines and excess mortality further. 
+
+
+# Reference list
+
+
+
+Aarstad, J. and Kvitastein, O.A. (2023). Is There a Link between the 2021 COVID-19 Vaccination Uptake in Europe and 2022 Excess All-Cause Mortality? 25-31, [online] 10(1). doi:https://doi.org/10.21276/apjhs.2023.10.1.6.Alami, A., Krewski, D., Farhat, N., Mattison, D., Wilson, K., Gravel, C.A., Farrell, P.J., Crispo, J.A.G., Haddad, N., Perez-Lloret, S. and Villeneuve, P.J. (2023). Risk of myocarditis and pericarditis in mRNA COVID-19-vaccinated and unvaccinated populations: a systematic review and meta-analysis. BMJ Open, [online] 13(6), p.e065687. doi:https://doi.org/10.1136/bmjopen-2022-065687.Caul, S. (2023). How do we measure expected and excess deaths? | National Statistical. [online] blog.ons.gov.uk. Available at: https://blog.ons.gov.uk/2023/02/10/how-do-we-measure-expected-and-excess-deaths/ [Accessed 14 Dec. 2023].Centers for Disease Control and Prevention (2023). NVSS - Provisional Death Counts for COVID-19 - Executive Summary. [online] www.cdc.gov. Available at: https://www.cdc.gov/nchs/covid19/mortality-overview.htm.Department of Health and Social Care (2023). Trends in Excess Deaths and Covid-19 Vaccines.ECDC (2021). Data on COVID-19 vaccination in the EU/EEA. [online] European Centre for Disease Prevention and Control. Available at: https://www.ecdc.europa.eu/en/publications-data/data-covid-19-vaccination-eu-eea.Eurostat (2023). Excess mortality - statistics. [online] ec.europa.eu. Available at: https://ec.europa.eu/eurostat/statistics-explained/index.php?title=Excess_mortality_-_statistics#:~:text=Recent%20data%20on%20excess%20mortality%20in%20the%20EU [Accessed 20 Dec. 2023].Jefferson, T. and Heneghan, C. (2023a). [Correction] The UK government briefing paper ‘Trends in Excess Deaths and Covid-19 Vaccines.’ [online] Trust the Evidence. Available at: https://trusttheevidence.substack.com/p/correction-the-uk-government-briefing.Jefferson, T. and Heneghan, C. (2023b). Is Ebenezer Scrooge Running UK Pharmacovigilance? [online] Trust the Evidence. Available at: https://trusttheevidence.substack.com/p/is-ebenezer-scrooge-running-uk-pharmacovigilance?r=1lcx51&utm_campaign=post&utm_medium=web [Accessed 20 Dec. 2023].McDonald, S. (2022). Why have there been excess deaths this summer? [online] UK in a changing Europe. Available at: https://ukandeu.ac.uk/why-have-there-been-excess-deaths-this-summer/ [Accessed 14 Dec. 2023].Mohammad Hossein Paknahad, Fatereh Baharlouei Yancheshmeh and Soleimani, A. (2023). Cardiovascular complications of COVID-19 vaccines: A review of case-report and case-series studies. Heart & Lung, [online] 59, pp.173–180. doi:https://doi.org/10.1016/j.hrtlng.2023.02.003.O’Dowd, A. (2023). Covid-19: UK death rate is still higher than before pandemic. BMJ, [online] 383, p.p2371. doi:https://doi.org/10.1136/bmj.p2371.PharmaNewsIntelligence (2021). European Countries Suspend Use of AstraZeneca’s COVID-19 Vaccine. [online] PharmaNewsIntelligence. Available at: https://pharmanewsintel.com/news/european-countries-suspend-use-of-astrazenecas-covid-19-vaccine.University, A.P.T.A., University of Melbourne; Associate Professor Brian Houle, Australian National University and University of the Witwatersrand, and Professor Vladimir Canudas-Romo, Australian National (2023). The rise and fall in Australia’s life expectancy during the pandemic. [online] Pursuit. Available at: https://pursuit.unimelb.edu.au/articles/the-rise-and-fall-in-australia-s-life-expectancy-during-the-pandemic#:~:text=During%20the%20first%20five%20months [Accessed 14 Dec. 2023].
+
+
+```{python}
+
+```
